@@ -90,16 +90,13 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
 void DocColorClustering::Plot2dLab(const std::string& output_path) {
   cv::Mat plot_2d(1200, 1200, CV_8UC3, cv::Vec3b(127, 127, 127));
 
-  for (ptrdiff_t y = 0; y < this->src_.rows; ++y) {
-    for (ptrdiff_t x = 0; x < this->src_.cols; ++x) {
-      cv::Vec3b pixel = this->src_.at<cv::Vec3b>(y, x);
-      if (pixel != cv::Vec3b(255, 255, 255)) {
-        cv::Mat rgb_point = (cv::Mat_<double>(1, 3) << pixel[2] / 255.0, pixel[1] / 255.0, pixel[0] / 255.0);
+    for (const auto& color : this->unique_colors) {
+      if (color != std::make_tuple(255, 255, 255)) {
+        cv::Mat rgb_point = (cv::Mat_<double>(1, 3) << std::get<0>(color) / 255.0, std::get<1>(color) / 255.0, std::get<2>(color) / 255.0);
         cv::Mat lab_point = this->CentralProjOnLab(rgb_point);
-        plot_2d.at<cv::Vec3b>(255 * lab_point.at<double>(0, 1), 255 * lab_point.at<double>(0, 0)) = pixel;
+        plot_2d.at<cv::Vec3b>(255 * lab_point.at<double>(0, 1), 255 * lab_point.at<double>(0, 0)) = cv::Vec3b(std::get<2>(color), std::get<1>(color), std::get<0>(color));
       }
     }
-  }
 
   cv::imwrite(output_path, plot_2d);
 }
