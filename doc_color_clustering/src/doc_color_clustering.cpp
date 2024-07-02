@@ -39,7 +39,6 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
   std::vector<std::pair<std::tuple<int, int, int>, int>> sorted_n_colors(this->color_to_n.begin(), this->color_to_n.end());
   std::sort(sorted_n_colors.begin(), sorted_n_colors.end(), [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second; });
   sorted_n_colors.resize(std::min(sorted_n_colors.size(), (size_t) 7000));
-  double max_n = std::max_element(this->color_to_n.begin(), this->color_to_n.end(), [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second; })->second;
 
   plot_3d << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
   plot_3d << "\\usepackage{pgfplots}\n";
@@ -57,26 +56,21 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
   plot_3d << "xtick={0}, ytick={0}, ztick={0},\n";
   plot_3d << "xlabel={$R$}, ylabel={$G$}, zlabel={$B$}]\n";
 
-  plot_3d << "\\draw[lightgray] (axis cs:255,0,0) -- (axis cs:255,255,0) -- (axis cs:0,255,0);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:255,255,255) -- (axis cs:0,255,255) -- (axis cs:0,0,255) -- (axis cs:255,0,255) -- (axis cs:255,255,255);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:255,0,0) -- (axis cs:255,0,255);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:255,255,0) -- (axis cs:255,255,255);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:0,255,0) -- (axis cs:0,255,255);\n";
+  plot_3d << "\\draw[] (axis cs:255,0,0) -- (axis cs:255,255,0) -- (axis cs:0,255,0);\n";
+  plot_3d << "\\draw[] (axis cs:255,255,255) -- (axis cs:0,255,255) -- (axis cs:0,0,255) -- (axis cs:255,0,255) -- (axis cs:255,255,255);\n";
+  plot_3d << "\\draw[] (axis cs:255,0,0) -- (axis cs:255,0,255);\n";
+  plot_3d << "\\draw[] (axis cs:255,255,0) -- (axis cs:255,255,255);\n";
+  plot_3d << "\\draw[] (axis cs:0,255,0) -- (axis cs:0,255,255);\n";
 
   plot_3d << "\\addplot3[\n";
   plot_3d << "only marks,\n";
   plot_3d << "mark=*,\n";
-  plot_3d << "color=purple,\n";
-  plot_3d << "scatter=true,\n";
-  plot_3d << "point meta=explicit symbolic,\n";
-  plot_3d << "scatter/@pre marker code/.style={/tikz/mark size=\\pgfplotspointmeta},\n";
-  plot_3d << "scatter/@post marker code/.style={}]\n";
-  plot_3d << "table[meta index=3]{\n";
+  plot_3d << "mark size=0.05,\n";
+  plot_3d << "color=purple]\n";
+  plot_3d << "table[]{\n";
 
   for (const auto& [color, _] : sorted_n_colors) {
-    double t = this->color_to_n[color] / max_n;
-    double point_size = std::lerp(0.1, 1.0, t);
-    plot_3d << std::get<2>(color) << ' ' << std::get<1>(color) << ' ' << std::get<0>(color) << ' ' << point_size << '\n';
+    plot_3d << std::get<2>(color) << ' ' << std::get<1>(color) << ' ' << std::get<0>(color) << '\n';
   }
 
   plot_3d << "};\n";
