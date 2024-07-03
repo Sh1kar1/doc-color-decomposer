@@ -1,10 +1,12 @@
 #include <doc_color_clustering/doc_color_clustering.h>
 
+
 DocColorClustering::DocColorClustering(const cv::Mat& rhs) {
   cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
   this->src_ = this->SRgbToLinRgb(rhs);
   this->CalcUniqueColorsAndColorToN();
 }
+
 
 cv::Mat DocColorClustering::SRgbToLinRgb(cv::Mat src) {
   src.convertTo(src, CV_32FC3, 1.0 / 255.0);
@@ -25,6 +27,7 @@ cv::Mat DocColorClustering::SRgbToLinRgb(cv::Mat src) {
   return src;
 }
 
+
 cv::Mat DocColorClustering::LinRgbToSRgb(cv::Mat src) {
   for (ptrdiff_t y = 0; y < src.rows; ++y) {
     for (ptrdiff_t x = 0; x < src.cols; ++x) {
@@ -44,6 +47,7 @@ cv::Mat DocColorClustering::LinRgbToSRgb(cv::Mat src) {
   return src;
 }
 
+
 cv::Mat DocColorClustering::CentralProjOnLab(const cv::Mat& rgb_point) {
   const cv::Mat white = (cv::Mat_<double>(1, 3) << 1.0, 1.0, 1.0);
   const cv::Mat norm = (cv::Mat_<double>(1, 3) << 1.0 / std::sqrt(3.0), 1.0 / std::sqrt(3.0), 1.0 / std::sqrt(3.0));
@@ -59,21 +63,23 @@ cv::Mat DocColorClustering::CentralProjOnLab(const cv::Mat& rgb_point) {
   return proj_in_lab;
 }
 
+
 void DocColorClustering::CalcUniqueColorsAndColorToN() {
   for (ptrdiff_t y = 0; y < this->src_.rows; ++y) {
     for (ptrdiff_t x = 0; x < this->src_.cols; ++x) {
       cv::Vec3f pixel = this->src_.at<cv::Vec3f>(y, x);
       std::tuple<double, double, double> color = std::make_tuple(pixel[2], pixel[1], pixel[0]);
-      this->unique_colors.insert(color);
-      this->color_to_n[color] += 1;
+      this->unique_colors_.insert(color);
+      this->color_to_n_[color] += 1;
     }
   }
 }
 
+
 void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int pitch) {
   std::ofstream plot_3d(output_path);
 
-  std::vector<std::pair<std::tuple<double, double, double>, int>> sorted_n_colors(this->color_to_n.begin(), this->color_to_n.end());
+  std::vector<std::pair<std::tuple<double, double, double>, int>> sorted_n_colors(this->color_to_n_.begin(), this->color_to_n_.end());
   std::sort(sorted_n_colors.begin(), sorted_n_colors.end(), [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second; });
   sorted_n_colors.resize(std::min(sorted_n_colors.size(), (size_t) 5000));
 
@@ -118,10 +124,11 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
   plot_3d.close();
 }
 
+
 void DocColorClustering::Plot2dLab(const std::string& output_path) {
   cv::Mat plot_2d(255 * 5, 255 * 5, CV_32FC3, cv::Vec3f(0.25, 0.25, 0.25));
 
-  for (const auto& color : this->unique_colors) {
+  for (const auto& color : this->unique_colors_) {
     if (color != std::make_tuple(1.0, 1.0, 1.0)) {
       cv::Mat rgb_point = (cv::Mat_<double>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
       cv::Mat lab_point = this->CentralProjOnLab(rgb_point);
@@ -130,4 +137,9 @@ void DocColorClustering::Plot2dLab(const std::string& output_path) {
   }
 
   cv::imwrite(output_path, this->LinRgbToSRgb(plot_2d));
+}
+
+
+void Plot1dPhi(const std::string& output_path = ".\\plot-1d-phi.png") {
+
 }

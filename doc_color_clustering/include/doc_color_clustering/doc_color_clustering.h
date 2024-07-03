@@ -12,24 +12,29 @@
 #include <set>
 #include <map>
 
+
 class DocColorClustering {
 public:
   DocColorClustering(const cv::Mat& rhs);
 
-  void Plot3dRgb(const std::string&lhs = ".\\plot-3d-rgb.tex", int rhs = 115, int pitch = 15);
+  void Plot3dRgb(const std::string& output_path = ".\\plot-3d-rgb.tex", int yaw = 115, int pitch = 15);
   void Plot2dLab(const std::string& output_path = ".\\plot-2d-lab.png");
+  void Plot1dPhi(const std::string& output_path = ".\\plot-1d-phi.png");
+
 
 private:
   cv::Mat SRgbToLinRgb(cv::Mat src);
   cv::Mat LinRgbToSRgb(cv::Mat src);
   cv::Mat CentralProjOnLab(const cv::Mat& rgb_point);
   void CalcUniqueColorsAndColorToN();
-  void CalcColorToPhi();
+  void CalcColorToPhiAndPhiHist();
 
   cv::Mat src_;
-  std::set<std::tuple<double, double, double>> unique_colors;
-  std::map<std::tuple<double, double, double>, int> color_to_n;
-  std::map<std::tuple<double, double, double>, int> color_to_phi;
+  std::set<std::tuple<double, double, double>> unique_colors_;
+  std::map<std::tuple<double, double, double>, int> color_to_n_;
+  std::map<std::tuple<double, double, double>, int> color_to_phi_;
+  cv::Mat PhiHist;
 };
+
 
 #endif // DOC_COLOR_CLUSTERING_H
