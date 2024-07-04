@@ -87,11 +87,15 @@ void DocColorClustering::CalcPhiHist() {
   this->phi_hist_ = cv::Mat::zeros(1, 360, CV_64F);
 
   for (const auto& [color, n] : this->color_to_n_) {
-    cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
-    cv::Mat lab_point = this->CentralProjOnLab(rgb_point);
-    int phi = std::lround(std::atan2(lab_point.at<float>(0, 1), lab_point.at<float>(0, 0)) * 180.0F / CV_PI + 360.0F) % 360;
-    this->color_to_phi_[color] = phi;
-    phi_hist_.at<double>(phi) += static_cast<double>(n);
+    if (std::get<0>(color) != std::get<1>(color) || std::get<1>(color) != std::get<2>(color) || std::get<0>(color) != std::get<2>(color)) {
+      cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
+      cv::Mat lab_point = this->CentralProjOnLab(rgb_point);
+      int phi = std::lround(std::atan2(lab_point.at<float>(0, 1), lab_point.at<float>(0, 0)) * 180.0F / CV_PI + 360.0F) % 360;
+      phi_hist_.at<double>(phi) += static_cast<double>(n);
+      this->color_to_phi_[color] = phi;
+    } else {
+      this->color_to_phi_[color] = -1;
+    }
   }
 }
 
@@ -100,9 +104,9 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
   std::ofstream plot_3d(output_path);
   plot_3d << std::fixed << std::setprecision(4);
 
-  std::vector<std::pair<std::tuple<float, float, float>, long long>> sorted_n_colors(this->color_to_n_.begin(), this->color_to_n_.end());
-  std::sort(sorted_n_colors.begin(), sorted_n_colors.end(), [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second; });
-  sorted_n_colors.resize(std::min(sorted_n_colors.size(), static_cast<size_t>(5000)));
+  std::vector<std::pair<std::tuple<float, float, float>, long long>> sorted_color_to_n(this->color_to_n_.begin(), this->color_to_n_.end());
+  std::shuffle(sorted_color_to_n.begin(), sorted_color_to_n.end(), std::mt19937(std::random_device()()));
+  sorted_color_to_n.resize(std::min(sorted_color_to_n.size(), static_cast<size_t>(7000)));
 
   plot_3d << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
   plot_3d << "\\usepackage{pgfplots}\n";
@@ -134,7 +138,7 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
   plot_3d << "color=purple!75]\n";
   plot_3d << "table[]{\n";
 
-  for (const auto& [color, _] : sorted_n_colors) {
+  for (const auto& [color, _] : sorted_color_to_n) {
     plot_3d << std::get<2>(color) << ' ' << std::get<1>(color) << ' ' << std::get<0>(color) << '\n';
   }
 
@@ -148,7 +152,7 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
 
 
 void DocColorClustering::Plot2dLab(const std::string& output_path) {
-  cv::Mat plot_2d(1275, 1275, CV_32FC3, cv::Vec3f(0.25F, 0.25F, 0.25F));
+  cv::Mat plot_2d(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
 
   for (const auto& [color, _] : this->color_to_n_) {
     cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
@@ -166,7 +170,7 @@ void DocColorClustering::Plot1dPhi(const std::string& output_path, bool smooth) 
 
   cv::Mat phi_hist = cv::Mat(this->phi_hist_);
   if (smooth) {
-    cv::GaussianBlur(phi_hist, phi_hist, cv::Size(35, 1), 0.0);
+    cv::GaussianBlur(phi_hist, phi_hist, cv::Size(15, 1), 0.0);
   }
 
   double max_n;
