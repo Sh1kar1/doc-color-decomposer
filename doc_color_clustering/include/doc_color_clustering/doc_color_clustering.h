@@ -5,6 +5,7 @@
 #include <opencv2/core/utils/logger.hpp>
 
 #include <fstream>
+#include <iomanip>
 #include <string>
 #include <map>
 
@@ -26,8 +27,8 @@ private:
   void CalcPhiHist();
 
   cv::Mat src_;
-  std::map<std::tuple<double, double, double>, int> color_to_n_;
-  std::map<std::tuple<double, double, double>, int> color_to_phi_;
+  std::map<std::tuple<float, float, float>, long long> color_to_n_;
+  std::map<std::tuple<float, float, float>, int> color_to_phi_;
   cv::Mat phi_hist_;
 };
 
