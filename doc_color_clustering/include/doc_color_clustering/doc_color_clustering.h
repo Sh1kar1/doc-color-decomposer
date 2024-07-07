@@ -18,7 +18,8 @@ public:
 
   void Plot3dRgb(const std::string& output_path = ".\\plot-3d-rgb.tex", int yaw = 115, int pitch = 15);
   void Plot2dLab(const std::string& output_path = ".\\plot-2d-lab.png");
-  void Plot1dPhi(const std::string& output_path = ".\\plot-1d-phi.tex", bool smooth = false);
+  void Plot1dPhi(const std::string& output_path = ".\\plot-1d-phi.tex");
+  void Plot1dClusters(const std::string& output_path = ".\\plot-1d-clusters.tex");
 
 
 private:
@@ -27,11 +28,13 @@ private:
   cv::Mat CentralProjOnLab(const cv::Mat& rgb_point);
   void CalcColorToN();
   void CalcPhiHist();
+  void CalcPhiClusters();
 
   cv::Mat src_;
+  cv::Mat phi_hist_;
+  std::vector<int> phi_clusters_;
   std::map<std::tuple<float, float, float>, long long> color_to_n_;
   std::map<std::tuple<float, float, float>, int> color_to_phi_;
-  cv::Mat phi_hist_;
 };
 
 

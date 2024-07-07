@@ -9,6 +9,7 @@ DocColorClustering::DocColorClustering(const cv::Mat& rhs) {
 
   this->CalcColorToN();
   this->CalcPhiHist();
+  this->CalcPhiClusters();
 }
 
 
@@ -100,111 +101,124 @@ void DocColorClustering::CalcPhiHist() {
 }
 
 
+void DocColorClustering::CalcPhiClusters() {
+
+}
+
+
 void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int pitch) {
-  std::ofstream plot_3d(output_path);
-  plot_3d << std::fixed << std::setprecision(4);
+  std::ofstream plot(output_path);
+  plot << std::fixed << std::setprecision(4);
 
   std::vector<std::pair<std::tuple<float, float, float>, long long>> sorted_color_to_n(this->color_to_n_.begin(), this->color_to_n_.end());
   std::shuffle(sorted_color_to_n.begin(), sorted_color_to_n.end(), std::mt19937(std::random_device()()));
   sorted_color_to_n.resize(std::min(sorted_color_to_n.size(), static_cast<size_t>(7000)));
 
-  plot_3d << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
-  plot_3d << "\\usepackage{pgfplots}\n";
-  plot_3d << "\\pgfplotsset{compat=newest}\n";
-  plot_3d << "\\begin{document}\n";
-  plot_3d << "\\begin{tikzpicture}\n\n";
+  plot << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
+  plot << "\\usepackage{pgfplots}\n";
+  plot << "\\pgfplotsset{compat=newest}\n";
+  plot << "\\begin{document}\n";
+  plot << "\\begin{tikzpicture}\n\n";
 
-  plot_3d << "\\begin{axis}[\n";
-  plot_3d << "view={" << yaw << "}{" << pitch << "},\n";
-  plot_3d << "height=10cm, width=10cm,\n";
-  plot_3d << "axis lines=center,\n";
-  plot_3d << "axis equal,\n";
-  plot_3d << "scale only axis,\n";
-  plot_3d << "enlargelimits=true,\n";
-  plot_3d << "xmin=0, xmax=1, ymin=0, ymax=1, zmin=0, zmax=1,\n";
-  plot_3d << "xtick={0}, ytick={0}, ztick={0},\n";
-  plot_3d << "xlabel={$R$}, ylabel={$G$}, zlabel={$B$}]\n\n";
+  plot << "\\begin{axis}[\n";
+  plot << "view={" << yaw << "}{" << pitch << "},\n";
+  plot << "height=10cm, width=10cm,\n";
+  plot << "axis lines=center,\n";
+  plot << "axis equal,\n";
+  plot << "scale only axis,\n";
+  plot << "enlargelimits=true,\n";
+  plot << "xmin=0, xmax=1, ymin=0, ymax=1, zmin=0, zmax=1,\n";
+  plot << "xtick={0}, ytick={0}, ztick={0},\n";
+  plot << "xlabel={$R$}, ylabel={$G$}, zlabel={$B$}]\n\n";
 
-  plot_3d << "\\draw[lightgray] (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
-  plot_3d << "\\draw[lightgray] (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
+  plot << "\\draw[lightgray] (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
+  plot << "\\draw[lightgray] (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
+  plot << "\\draw[lightgray] (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
+  plot << "\\draw[lightgray] (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
+  plot << "\\draw[lightgray] (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
 
-  plot_3d << "\\addplot3[\n";
-  plot_3d << "only marks,\n";
-  plot_3d << "mark=*,\n";
-  plot_3d << "mark size=0.1,\n";
-  plot_3d << "color=purple!75]\n";
-  plot_3d << "table[]{\n";
+  plot << "\\addplot3[\n";
+  plot << "only marks,\n";
+  plot << "mark=*,\n";
+  plot << "mark size=0.1,\n";
+  plot << "color=purple!75]\n";
+  plot << "table[]{\n";
 
   for (const auto& [color, _] : sorted_color_to_n) {
-    plot_3d << std::get<2>(color) << ' ' << std::get<1>(color) << ' ' << std::get<0>(color) << '\n';
+    plot << std::get<2>(color) << ' ' << std::get<1>(color) << ' ' << std::get<0>(color) << '\n';
   }
 
-  plot_3d << "};\n\n";
-  plot_3d << "\\end{axis}\n";
-  plot_3d << "\\end{tikzpicture}\n";
-  plot_3d << "\\end{document}\n";
+  plot << "};\n\n";
+  plot << "\\end{axis}\n";
+  plot << "\\end{tikzpicture}\n";
+  plot << "\\end{document}\n";
 
-  plot_3d.close();
+  plot.close();
 }
 
 
 void DocColorClustering::Plot2dLab(const std::string& output_path) {
-  cv::Mat plot_2d(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
+  cv::Mat plot(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
 
   for (const auto& [color, _] : this->color_to_n_) {
     cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
     cv::Mat lab_point = this->CentralProjOnLab(rgb_point);
-    plot_2d.at<cv::Vec3f>(std::lround(255.0F * (lab_point.at<float>(0, 1) + 3.0F)), std::lround(255.0F * (lab_point.at<float>(0, 0) + 2.5F))) = cv::Vec3f(std::get<2>(color), std::get<1>(color), std::get<0>(color));
+    int y = std::lround(255.0F * (lab_point.at<float>(0, 1) + 3.0F));
+    int x = std::lround(255.0F * (lab_point.at<float>(0, 0) + 2.5F));
+    plot.at<cv::Vec3f>(y, x) = cv::Vec3f(std::get<2>(color), std::get<1>(color), std::get<0>(color));
   }
 
-  cv::imwrite(output_path, this->LinRgbToSRgb(plot_2d));
+  cv::imwrite(output_path, this->LinRgbToSRgb(plot));
 }
 
 
-void DocColorClustering::Plot1dPhi(const std::string& output_path, bool smooth) {
-  std::ofstream plot_1d(output_path);
-  plot_1d << std::fixed << std::setprecision(1);
-
-  cv::Mat phi_hist = cv::Mat(this->phi_hist_);
-  if (smooth) {
-    cv::GaussianBlur(phi_hist, phi_hist, cv::Size(15, 1), 0.0);
-  }
+void DocColorClustering::Plot1dPhi(const std::string& output_path) {
+  std::ofstream plot(output_path);
+  plot << std::fixed << std::setprecision(1);
 
   double max_n;
-  cv::minMaxLoc(phi_hist, nullptr, &max_n, nullptr, nullptr);
+  cv::minMaxLoc(this->phi_hist_, nullptr, &max_n, nullptr, nullptr);
 
-  plot_1d << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
-  plot_1d << "\\usepackage{pgfplots}\n";
-  plot_1d << "\\pgfplotsset{compat=newest}\n";
-  plot_1d << "\\begin{document}\n";
-  plot_1d << "\\begin{tikzpicture}\n\n";
+  plot << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
+  plot << "\\usepackage{pgfplots}\n";
+  plot << "\\pgfplotsset{compat=newest}\n";
+  plot << "\\begin{document}\n";
+  plot << "\\begin{tikzpicture}\n\n";
 
-  plot_1d << "\\begin{axis}[\n";
-  plot_1d << "height=10cm, width=30cm,\n";
-  plot_1d << "xmin=0, xmax=360, ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot_1d << "tick align=outside,\n";
-  plot_1d << "grid=both,\n";
-  plot_1d << "yminorgrids=true,\n";
-  plot_1d << "xlabel={$\\phi$}, ylabel={$n$}]\n\n";
+  plot << "\\begin{axis}[\n";
+  plot << "height=10cm, width=30cm,\n";
+  plot << "xmin=0, xmax=360, ymin=0, ymax=" << std::lround(max_n) << ",\n";
+  plot << "tick align=outside,\n";
+  plot << "grid=both,\n";
+  plot << "yminorgrids=true,\n";
+  plot << "xlabel={$\\phi$}, ylabel={$n$}]\n\n";
 
-  plot_1d << "\\addplot[\n";
-  plot_1d << "ybar interval,\n";
-  plot_1d << "mark=none,\n";
-  plot_1d << "fill=purple!25,\n";
-  plot_1d << "draw=purple]\n";
-  plot_1d << "coordinates{\n";
+  plot << "\\addplot[\n";
+  plot << "ybar interval,\n";
+  plot << "mark=none,\n";
+  plot << "fill=purple!25,\n";
+  plot << "draw=purple]\n";
+  plot << "coordinates{\n";
 
   for (int phi = 0; phi < 360; ++phi) {
-    plot_1d << '(' << phi << ',' << std::lround(phi_hist.at<double>(phi)) << ")\n";
+    plot << '(' << phi << ',' << std::lround(this->phi_hist_.at<double>(phi)) << ")\n";
   }
 
-  plot_1d << "};\n\n";
-  plot_1d << "\\end{axis}\n";
-  plot_1d << "\\end{tikzpicture}\n";
-  plot_1d << "\\end{document}\n";
+  plot << "};\n\n";
+  plot << "\\end{axis}\n";
+  plot << "\\end{tikzpicture}\n";
+  plot << "\\end{document}\n";
 
-  plot_1d.close();
+  plot.close();
+}
+
+
+void DocColorClustering::Plot1dClusters(const std::string& output_path) {
+  std::ofstream plot(output_path);
+  plot << std::fixed << std::setprecision(1);
+
+  cv::Mat phi_hist;
+  cv::GaussianBlur(this->phi_hist_, phi_hist, cv::Size(15, 1), 0.0);
+
+  plot.close();
 }
