@@ -6,7 +6,7 @@ int main() {
   DocColorClustering dcc = DocColorClustering(img);
   dcc.Plot3dRgb();
   dcc.Plot2dLab();
-  dcc.Plot1dPhi(".\\plot-1d-phi.tex", false);
-  dcc.Plot1dPhi(".\\plot-1d-phi-smooth.tex", true);
+  dcc.Plot1dPhi();
+  dcc.Plot1dClusters();
   return EXIT_SUCCESS;
 }
