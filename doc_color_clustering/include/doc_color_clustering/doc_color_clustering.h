@@ -19,22 +19,25 @@ class DocColorClustering {
 public:
   DocColorClustering(const cv::Mat& src);
 
+  std::vector<cv::Mat> GetLayers();
+
   void Plot3dRgb(const std::string& output_path = ".\\plot-3d-rgb.tex", int yaw = 115, int pitch = 15);
   void Plot2dLab(const std::string& output_path = ".\\plot-2d-lab.png");
   void Plot1dPhi(const std::string& output_path = ".\\plot-1d-phi.tex");
   void Plot1dClusters(const std::string& output_path = ".\\plot-1d-clusters.tex");
 
-
 private:
-  cv::Mat SRgbToLinRgb(cv::Mat src);
-  cv::Mat LinRgbToSRgb(cv::Mat src);
+  cv::Mat ReduceColorAberration(cv::Mat src, double s_thresh = 25.0, double v_thresh = 64.0);
+  cv::Mat SmoothHue(cv::Mat src, int ker_size = 15);
+  cv::Mat ConvertSRgbToLinRgb(cv::Mat src);
+  cv::Mat ConvertLinRgbToSRgb(cv::Mat src);
   std::map<std::tuple<float, float, float>, long long> LutColorToN(const cv::Mat& src);
-  cv::Mat CentralProjOnLab(const cv::Mat& rgb_point);
-  std::vector<int> HistPeaks(const cv::Mat& hist);
-  std::vector<int> FilterMaximums(const std::vector<int>& peaks, const cv::Mat& hist, int min_h, int min_w);
+  cv::Mat ProjOnLab(const cv::Mat& rgb_point);
+  std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
 
-  void CalcPhiHist();
-  void CalcPhiClusters();
+  void ComputePhiHist(int ker_size = 35);
+  void ComputePhiClusters();
+  void ComputeLayers();
 
   cv::Mat src_;
   cv::Mat phi_hist_;
@@ -43,6 +46,7 @@ private:
   std::map<std::tuple<float, float, float>, long long> color_to_n_;
   std::map<std::tuple<float, float, float>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
+  std::vector<cv::Mat> layers_;
 };
 
 
