@@ -12,7 +12,7 @@
 #include <map>
 
 #include <iomanip>
-#include <fstream>
+#include <sstream>
 
 
 class DocColorClustering {
@@ -21,13 +21,13 @@ public:
 
   std::vector<cv::Mat> GetLayers();
 
-  void Plot3dRgb(const std::string& output_path = ".\\plot-3d-rgb.tex", int yaw = 115, int pitch = 15);
-  void Plot2dLab(const std::string& output_path = ".\\plot-2d-lab.png");
-  void Plot1dPhi(const std::string& output_path = ".\\plot-1d-phi.tex");
-  void Plot1dClusters(const std::string& output_path = ".\\plot-1d-clusters.tex");
+  std::string Plot3dRgb(int yaw = 115, int pitch = 15);
+  cv::Mat Plot2dLab();
+  std::string Plot1dPhi();
+  std::string Plot1dClusters();
 
 private:
-  cv::Mat ReduceColorAberration(cv::Mat src, double s_thresh = 25.0, double v_thresh = 64.0);
+  cv::Mat ThreshSaturationAndVibrance(cv::Mat src, double s_thresh = 25.0, double v_thresh = 64.0);
   cv::Mat SmoothHue(cv::Mat src, int ker_size = 15);
   cv::Mat ConvertSRgbToLinRgb(cv::Mat src);
   cv::Mat ConvertLinRgbToSRgb(cv::Mat src);

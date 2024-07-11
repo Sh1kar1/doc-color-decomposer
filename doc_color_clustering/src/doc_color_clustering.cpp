@@ -3,9 +3,8 @@
 
 DocColorClustering::DocColorClustering(const cv::Mat& src) {
   cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
-  std::ios::sync_with_stdio(false);
 
-  this->src_ = this->ConvertSRgbToLinRgb(this->SmoothHue(this->ReduceColorAberration(src)));
+  this->src_ = this->ConvertSRgbToLinRgb(this->SmoothHue(this->ThreshSaturationAndVibrance(src)));
   this->color_to_n_ = this->LutColorToN(this->src_);
 
   this->ComputePhiHist();
@@ -19,7 +18,7 @@ std::vector<cv::Mat> DocColorClustering::GetLayers() {
 }
 
 
-cv::Mat DocColorClustering::ReduceColorAberration(cv::Mat src, double s_thresh, double v_thresh) {
+cv::Mat DocColorClustering::ThreshSaturationAndVibrance(cv::Mat src, double s_thresh, double v_thresh) {
   cv::cvtColor(src, src, cv::COLOR_BGR2HSV_FULL);
 
   std::vector<cv::Mat> hsv_channels;
@@ -226,8 +225,8 @@ void DocColorClustering::ComputeLayers() {
 }
 
 
-void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int pitch) {
-  std::ofstream plot(output_path);
+std::string DocColorClustering::Plot3dRgb(int yaw, int pitch) {
+  std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
   std::vector<std::pair<std::tuple<float, float, float>, long long>> sorted_color_to_n(this->color_to_n_.begin(), this->color_to_n_.end());
@@ -273,11 +272,11 @@ void DocColorClustering::Plot3dRgb(const std::string& output_path, int yaw, int 
   plot << "\\end{tikzpicture}\n";
   plot << "\\end{document}\n";
 
-  plot.close();
+  return plot.str();
 }
 
 
-void DocColorClustering::Plot2dLab(const std::string& output_path) {
+cv::Mat DocColorClustering::Plot2dLab() {
   cv::Mat plot(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
 
   for (const auto& [color, _] : this->color_to_n_) {
@@ -288,12 +287,12 @@ void DocColorClustering::Plot2dLab(const std::string& output_path) {
     plot.at<cv::Vec3f>(y, x) = cv::Vec3f(std::get<2>(color), std::get<1>(color), std::get<0>(color));
   }
 
-  cv::imwrite(output_path, this->ConvertLinRgbToSRgb(plot));
+  return this->ConvertLinRgbToSRgb(plot);
 }
 
 
-void DocColorClustering::Plot1dPhi(const std::string& output_path) {
-  std::ofstream plot(output_path);
+std::string DocColorClustering::Plot1dPhi() {
+  std::stringstream plot;
   plot << std::fixed << std::setprecision(1);
 
   double max_n;
@@ -329,12 +328,12 @@ void DocColorClustering::Plot1dPhi(const std::string& output_path) {
   plot << "\\end{tikzpicture}\n";
   plot << "\\end{document}\n";
 
-  plot.close();
+  return plot.str();
 }
 
 
-void DocColorClustering::Plot1dClusters(const std::string& output_path) {
-  std::ofstream plot(output_path);
+std::string DocColorClustering::Plot1dClusters() {
+  std::stringstream plot;
   plot << std::fixed << std::setprecision(1);
 
   double max_n;
@@ -375,5 +374,5 @@ void DocColorClustering::Plot1dClusters(const std::string& output_path) {
   plot << "\\end{tikzpicture}\n";
   plot << "\\end{document}\n";
 
-  plot.close();
+  return plot.str();
 }
