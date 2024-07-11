@@ -1,23 +1,23 @@
 #ifndef DOC_COLOR_CLUSTERING_H
 #define DOC_COLOR_CLUSTERING_H
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/utils/logger.hpp>
 
-#include <algorithm>
 #include <random>
+#include <ranges>
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #include <iomanip>
 #include <sstream>
 
-
 class DocColorClustering {
 public:
-  DocColorClustering(const cv::Mat& src);
+  explicit DocColorClustering(const cv::Mat& src);
 
   std::vector<cv::Mat> GetLayers();
 
@@ -27,13 +27,13 @@ public:
   std::string Plot1dClusters();
 
 private:
-  cv::Mat ThreshSaturationAndVibrance(cv::Mat src, double s_thresh = 25.0, double v_thresh = 64.0);
-  cv::Mat SmoothHue(cv::Mat src, int ker_size = 15);
-  cv::Mat ConvertSRgbToLinRgb(cv::Mat src);
-  cv::Mat ConvertLinRgbToSRgb(cv::Mat src);
-  std::map<std::tuple<float, float, float>, long long> LutColorToN(const cv::Mat& src);
-  cv::Mat ProjOnLab(const cv::Mat& rgb_point);
-  std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
+  static cv::Mat ThreshSaturationAndVibrance(cv::Mat src, double s_thresh = 25.0, double v_thresh = 64.0);
+  static cv::Mat SmoothHue(cv::Mat src, int ker_size = 15);
+  static cv::Mat ConvertSRgbToLinRgb(cv::Mat src);
+  static cv::Mat ConvertLinRgbToSRgb(cv::Mat src);
+  static std::map<std::tuple<float, float, float>, long long> LutColorToN(const cv::Mat& src);
+  static cv::Mat ProjOnLab(const cv::Mat& rgb_point);
+  static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
 
   void ComputePhiHist(int ker_size = 35);
   void ComputePhiClusters();
@@ -48,6 +48,5 @@ private:
   std::vector<int> phi_to_cluster_;
   std::vector<cv::Mat> layers_;
 };
-
 
 #endif // DOC_COLOR_CLUSTERING_H

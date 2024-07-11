@@ -1,15 +1,14 @@
 #include <doc_color_clustering/doc_color_clustering.h>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <string>
 #include <vector>
 
 #include <fstream>
 
-
 int main() {
-  cv::Mat img = cv::imread("..\\example\\data\\1.png", cv::IMREAD_COLOR);
+  cv::Mat img = cv::imread(R"(..\example\data\1.png)", cv::IMREAD_COLOR);
   DocColorClustering dcc = DocColorClustering(img);
 
   std::vector<cv::Mat> layers = dcc.GetLayers();
