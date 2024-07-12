@@ -1,4 +1,4 @@
-#include <doc_color_clustering/doc_color_clustering.h>
+#include "doc_color_clustering/doc_color_clustering.h"
 
 DocColorClustering::DocColorClustering(const cv::Mat& src) {
   cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
@@ -49,35 +49,29 @@ cv::Mat DocColorClustering::SmoothHue(cv::Mat src, int ker_size) {
 cv::Mat DocColorClustering::ConvertSRgbToLinRgb(cv::Mat src) {
   src.convertTo(src, CV_32FC3, 1.0 / 255.0);
 
-  for (int y = 0; y < src.rows; ++y) {
-    for (int x = 0; x < src.cols; ++x) {
-      auto& pixel = src.at<cv::Vec3f>(y, x);
-      for (int k = 0; k < 3; ++k) {
-        if (pixel[k] <= 0.04045F) {
-          pixel[k] /= 12.92F;
-        } else {
-          pixel[k] = std::pow((pixel[k] + 0.055F) / 1.055F, 2.4F);
-        }
+  src.forEach<cv::Vec3f>([](cv::Vec3f& pixel, const int*) -> void {
+    for (int k = 0; k < 3; ++k) {
+      if (pixel[k] <= 0.04045F) {
+        pixel[k] /= 12.92F;
+      } else {
+        pixel[k] = std::pow((pixel[k] + 0.055F) / 1.055F, 2.4F);
       }
     }
-  }
+  });
 
   return src;
 }
 
 cv::Mat DocColorClustering::ConvertLinRgbToSRgb(cv::Mat src) {
-  for (int y = 0; y < src.rows; ++y) {
-    for (int x = 0; x < src.cols; ++x) {
-      auto& pixel = src.at<cv::Vec3f>(y, x);
-      for (int k = 0; k < 3; ++k) {
-        if (pixel[k] <= 0.0031308F) {
-          pixel[k] *= 12.92F;
-        } else {
-          pixel[k] = 1.055F * std::pow(pixel[k], 1.0F / 2.4F) - 0.055F;
-        }
+  src.forEach<cv::Vec3f>([](cv::Vec3f& pixel, const int*) -> void {
+    for (int k = 0; k < 3; ++k) {
+      if (pixel[k] <= 0.0031308F) {
+        pixel[k] *= 12.92F;
+      } else {
+        pixel[k] = 1.055F * std::pow(pixel[k], 1.0F / 2.4F) - 0.055F;
       }
     }
-  }
+  });
 
   src.convertTo(src, CV_8UC3, 255.0);
 
