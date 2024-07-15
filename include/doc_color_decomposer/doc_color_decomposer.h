@@ -1,5 +1,5 @@
-#ifndef DOC_COLOR_CLUSTERING_H
-#define DOC_COLOR_CLUSTERING_H
+#ifndef DOC_COLOR_DECOMPOSER_H
+#define DOC_COLOR_DECOMPOSER_H
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -15,9 +15,9 @@
 #include <iomanip>
 #include <sstream>
 
-class DocColorClustering {
+class DocColorDecomposer {
 public:
-  explicit DocColorClustering(const cv::Mat& src);
+  explicit DocColorDecomposer(const cv::Mat& src);
 
   std::vector<cv::Mat> GetLayers();
 
@@ -49,4 +49,4 @@ private:
   std::vector<cv::Mat> layers_;
 };
 
-#endif // DOC_COLOR_CLUSTERING_H
+#endif // DOC_COLOR_DECOMPOSER_H

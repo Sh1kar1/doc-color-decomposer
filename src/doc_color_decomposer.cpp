@@ -1,6 +1,6 @@
-#include "doc_color_clustering/doc_color_clustering.h"
+#include "doc_color_decomposer/doc_color_decomposer.h"
 
-DocColorClustering::DocColorClustering(const cv::Mat& src) {
+DocColorDecomposer::DocColorDecomposer(const cv::Mat& src) {
   cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
 
   this->src_ = ConvertSRgbToLinRgb(SmoothHue(ThreshSaturationAndVibrance(src)));
@@ -11,11 +11,11 @@ DocColorClustering::DocColorClustering(const cv::Mat& src) {
   this->ComputeLayers();
 }
 
-std::vector<cv::Mat> DocColorClustering::GetLayers() {
+std::vector<cv::Mat> DocColorDecomposer::GetLayers() {
   return this->layers_;
 }
 
-cv::Mat DocColorClustering::ThreshSaturationAndVibrance(cv::Mat src, double s_thresh, double v_thresh) {
+cv::Mat DocColorDecomposer::ThreshSaturationAndVibrance(cv::Mat src, double s_thresh, double v_thresh) {
   cv::cvtColor(src, src, cv::COLOR_BGR2HSV_FULL);
 
   std::vector<cv::Mat> hsv_channels;
@@ -31,7 +31,7 @@ cv::Mat DocColorClustering::ThreshSaturationAndVibrance(cv::Mat src, double s_th
   return src;
 }
 
-cv::Mat DocColorClustering::SmoothHue(cv::Mat src, int ker_size) {
+cv::Mat DocColorDecomposer::SmoothHue(cv::Mat src, int ker_size) {
   cv::Mat smooth_src;
   cv::GaussianBlur(src, smooth_src, cv::Size(ker_size, ker_size), ker_size);
 
@@ -46,7 +46,7 @@ cv::Mat DocColorClustering::SmoothHue(cv::Mat src, int ker_size) {
   return src;
 }
 
-cv::Mat DocColorClustering::ConvertSRgbToLinRgb(cv::Mat src) {
+cv::Mat DocColorDecomposer::ConvertSRgbToLinRgb(cv::Mat src) {
   src.convertTo(src, CV_32FC3, 1.0 / 255.0);
 
   src.forEach<cv::Vec3f>([](cv::Vec3f& pixel, const int*) -> void {
@@ -62,7 +62,7 @@ cv::Mat DocColorClustering::ConvertSRgbToLinRgb(cv::Mat src) {
   return src;
 }
 
-cv::Mat DocColorClustering::ConvertLinRgbToSRgb(cv::Mat src) {
+cv::Mat DocColorDecomposer::ConvertLinRgbToSRgb(cv::Mat src) {
   src.forEach<cv::Vec3f>([](cv::Vec3f& pixel, const int*) -> void {
     for (int k = 0; k < 3; ++k) {
       if (pixel[k] <= 0.0031308F) {
@@ -78,7 +78,7 @@ cv::Mat DocColorClustering::ConvertLinRgbToSRgb(cv::Mat src) {
   return src;
 }
 
-std::map<std::tuple<float, float, float>, long long> DocColorClustering::LutColorToN(const cv::Mat& src) {
+std::map<std::tuple<float, float, float>, long long> DocColorDecomposer::LutColorToN(const cv::Mat& src) {
   std::map<std::tuple<float, float, float>, long long> color_to_n;
 
   for (int y = 0; y < src.rows; ++y) {
@@ -92,7 +92,7 @@ std::map<std::tuple<float, float, float>, long long> DocColorClustering::LutColo
   return color_to_n;
 }
 
-cv::Mat DocColorClustering::ProjOnLab(const cv::Mat& rgb_point) {
+cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb_point) {
   const cv::Mat kWhite = (cv::Mat_<float>(1, 3) << 1.0F, 1.0F, 1.0F);
   const cv::Mat kNorm = (cv::Mat_<float>(1, 3) << 1.0F / std::sqrt(3.0F), 1.0F / std::sqrt(3.0F), 1.0F / std::sqrt(3.0F));
   const cv::Mat kRgbToLab = (cv::Mat_<float>(3, 3) <<
@@ -112,7 +112,7 @@ cv::Mat DocColorClustering::ProjOnLab(const cv::Mat& rgb_point) {
   return proj_in_lab;
 }
 
-std::vector<int> DocColorClustering::FindHistPeaks(const cv::Mat& hist, int min_h) {
+std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_h) {
   std::vector<int> extremes, peaks;
 
   int delta = 0;
@@ -148,7 +148,7 @@ std::vector<int> DocColorClustering::FindHistPeaks(const cv::Mat& hist, int min_
   return peaks;
 }
 
-void DocColorClustering::ComputePhiHist(int ker_size) {
+void DocColorDecomposer::ComputePhiHist(int ker_size) {
   this->phi_hist_ = cv::Mat::zeros(1, 360, CV_64F);
 
   for (const auto& [color, n] : this->color_to_n_) {
@@ -167,7 +167,7 @@ void DocColorClustering::ComputePhiHist(int ker_size) {
   this->smooth_phi_hist_.convertTo(this->smooth_phi_hist_, CV_32S);
 }
 
-void DocColorClustering::ComputePhiClusters() {
+void DocColorDecomposer::ComputePhiClusters() {
   this->phi_to_cluster_ = std::vector<int>(360, 1);
 
   double max_h;
@@ -187,7 +187,7 @@ void DocColorClustering::ComputePhiClusters() {
   }
 }
 
-void DocColorClustering::ComputeLayers() {
+void DocColorDecomposer::ComputeLayers() {
   for (int i = 0; i < this->phi_clusters_.size() + 1; ++i) {
     this->layers_.emplace_back(this->src_.rows, this->src_.cols, CV_32FC3, cv::Vec3f(1.0F, 1.0F, 1.0F));
   }
@@ -207,7 +207,7 @@ void DocColorClustering::ComputeLayers() {
   }
 }
 
-std::string DocColorClustering::Plot3dRgb(int yaw, int pitch) {
+std::string DocColorDecomposer::Plot3dRgb(int yaw, int pitch) {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
@@ -257,7 +257,7 @@ std::string DocColorClustering::Plot3dRgb(int yaw, int pitch) {
   return plot.str();
 }
 
-cv::Mat DocColorClustering::Plot2dLab() {
+cv::Mat DocColorDecomposer::Plot2dLab() {
   cv::Mat plot(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
 
   for (const auto& [color, _] : this->color_to_n_) {
@@ -271,7 +271,7 @@ cv::Mat DocColorClustering::Plot2dLab() {
   return ConvertLinRgbToSRgb(plot);
 }
 
-std::string DocColorClustering::Plot1dPhi() {
+std::string DocColorDecomposer::Plot1dPhi() {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(1);
 
@@ -311,7 +311,7 @@ std::string DocColorClustering::Plot1dPhi() {
   return plot.str();
 }
 
-std::string DocColorClustering::Plot1dClusters() {
+std::string DocColorDecomposer::Plot1dClusters() {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(1);
 
