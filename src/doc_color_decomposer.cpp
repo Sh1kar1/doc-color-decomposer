@@ -1,8 +1,6 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
 DocColorDecomposer::DocColorDecomposer(const cv::Mat& src) {
-  cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
-
   src_ = CvtSRgbToLinRgb(SmoothHue(ThreshSaturation(src)));
   color_to_n_ = LutColorToN(src_);
 

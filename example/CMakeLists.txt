@@ -1,4 +1,4 @@
-project(app LANGUAGES CXX)
+project(doc_color_decomposer_app LANGUAGES CXX)
 
 add_executable(${PROJECT_NAME} main.cpp)
 

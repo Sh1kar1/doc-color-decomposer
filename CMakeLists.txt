@@ -18,4 +18,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${OpenCV_LIBS})
 install(TARGETS ${CMAKE_PROJECT_NAME} LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(DIRECTORY include DESTINATION .)
 
-add_subdirectory(app)
+add_subdirectory(example)

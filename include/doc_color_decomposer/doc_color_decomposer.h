@@ -3,7 +3,6 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/core/utils/logger.hpp>
 
 #include <random>
 #include <ranges>
@@ -16,8 +15,9 @@
 #include <iomanip>
 #include <sstream>
 
-class DocColorDecomposer {
+class [[nodiscard]] DocColorDecomposer {
 public:
+  explicit DocColorDecomposer() = default;
   explicit DocColorDecomposer(const cv::Mat& src);
 
   [[nodiscard]] std::vector<cv::Mat> GetLayers();
