@@ -14,6 +14,7 @@
 
 int main(int argc, char** argv) {
   std::vector<std::string> args(argv, argv + argc);
+
   cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
 
   if (args.size() == 3 || args.size() == 4 && (args[3] == "--visualize" || args[3] == "-v")) {
@@ -23,8 +24,8 @@ int main(int argc, char** argv) {
 
     DocColorDecomposer dcd;
     try {
-      cv::Mat img = cv::imread(src_path.generic_string(), cv::IMREAD_COLOR);
-      dcd = DocColorDecomposer(img);
+      cv::Mat src = cv::imread(src_path.string(), cv::IMREAD_COLOR);
+      dcd = DocColorDecomposer(src);
     } catch (...) {
       std::cerr << "Error: invalid image";
       return EXIT_FAILURE;
@@ -36,16 +37,20 @@ int main(int argc, char** argv) {
 
     std::vector<cv::Mat> layers = dcd.GetLayers();
     for (int i = 0; i < layers.size(); ++i) {
-      cv::imwrite((dst_path / "layer-").generic_string() + std::to_string(i + 1) + ".png", layers[i]);
+      cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(i + 1) + ".png", layers[i]);
     }
 
     if (visualize) {
-      cv::Mat plot_2d_lab = dcd.Plot2dLab();
-      cv::imwrite((dst_path / "plot-2d-lab.png").generic_string(), plot_2d_lab);
+      cv::Mat merged_layers = dcd.MergeLayers();
+      cv::imwrite((dst_path / (src_path.stem().string() + "-merged-layers.png")).string(), merged_layers);
 
-      std::ofstream plot_3d_rgb(dst_path / "plot-3d-rgb.tex");
-      std::ofstream plot_1d_phi(dst_path / "plot-1d-phi.tex");
-      std::ofstream plot_1d_clusters(dst_path / "plot-1d-clusters.tex");
+      cv::Mat plot_2d_lab = dcd.Plot2dLab();
+      cv::imwrite((dst_path / (src_path.stem().string() + "-plot-2d-lab.png")).string(), plot_2d_lab);
+
+      std::ofstream plot_3d_rgb(dst_path / (src_path.stem().string() + "-plot-3d-rgb.tex"));
+      std::ofstream plot_1d_phi(dst_path / (src_path.stem().string() + "-plot-1d-phi.tex"));
+      std::ofstream plot_1d_clusters(dst_path / (src_path.stem().string() + "-plot-1d-clusters.tex"));
+
       plot_3d_rgb << dcd.Plot3dRgb();
       plot_1d_phi << dcd.Plot1dPhi();
       plot_1d_clusters << dcd.Plot1dClusters();
@@ -54,13 +59,10 @@ int main(int argc, char** argv) {
     std::cout << "Success: files saved";
 
   } else if (args.size() == 1 || args.size() == 2 && (args[1] == "--help" || args[1] == "-h")) {
-    std::cout << "DESCRIPTION\n";
-    std::cout << "    This is an app that demonstrates the functionality of the `Doc Color Decomposer` library.\n";
+    std::cout << "USAGE\n";
+    std::cout << "    ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]\n";
 
-    std::cout << "\nUSAGE\n";
-    std::cout << "    app <path-to-image> <path-to-output-directory> [options]\n";
-
-    std::cout << "\nOPTIONS\n";
+    std::cout << "OPTIONS\n";
     std::cout << "    -v, --visualize    Save visualizations";
 
   } else {
