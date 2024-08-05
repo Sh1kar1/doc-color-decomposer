@@ -6,6 +6,8 @@
 
 #include <filesystem>
 
+#include <ranges>
+
 #include <string>
 #include <vector>
 
@@ -35,25 +37,17 @@ int main(int argc, char** argv) {
       std::filesystem::create_directory(dst_path);
     }
 
-    std::vector<cv::Mat> layers = dcd.GetLayers();
-    for (size_t i = 0; i < layers.size(); ++i) {
-      cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(i + 1) + ".png", layers[i]);
+    for (const auto& [i, layer] : dcd.GetLayers() | std::views::enumerate) {
+      cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(i + 1) + ".png", layer);
     }
 
     if (visualize) {
-      cv::Mat merged_layers = dcd.MergeLayers();
-      cv::imwrite((dst_path / (src_path.stem().string() + "-merged-layers.png")).string(), merged_layers);
+      cv::imwrite((dst_path / (src_path.stem().string() + "-merged-layers.png")).string(), dcd.MergeLayers());
+      cv::imwrite((dst_path / (src_path.stem().string() + "-plot-2d-lab.png")).string(), dcd.Plot2dLab());
 
-      cv::Mat plot_2d_lab = dcd.Plot2dLab();
-      cv::imwrite((dst_path / (src_path.stem().string() + "-plot-2d-lab.png")).string(), plot_2d_lab);
-
-      std::ofstream plot_3d_rgb(dst_path / (src_path.stem().string() + "-plot-3d-rgb.tex"));
-      std::ofstream plot_1d_phi(dst_path / (src_path.stem().string() + "-plot-1d-phi.tex"));
-      std::ofstream plot_1d_clusters(dst_path / (src_path.stem().string() + "-plot-1d-clusters.tex"));
-
-      plot_3d_rgb << dcd.Plot3dRgb();
-      plot_1d_phi << dcd.Plot1dPhi();
-      plot_1d_clusters << dcd.Plot1dClusters();
+      std::ofstream(dst_path / (src_path.stem().string() + "-plot-3d-rgb.tex")) << dcd.Plot3dRgb();
+      std::ofstream(dst_path / (src_path.stem().string() + "-plot-1d-phi.tex")) << dcd.Plot1dPhi();
+      std::ofstream(dst_path / (src_path.stem().string() + "-plot-1d-clusters.tex")) << dcd.Plot1dClusters();
     }
 
     std::cout << "Success: files saved";

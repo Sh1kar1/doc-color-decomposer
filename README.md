@@ -161,33 +161,23 @@ Implementation of the following research article:
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <string>
-#include <vector>
-
 #include <fstream>
+#include <ranges>
 
 int main() {
   cv::Mat src = cv::imread("/path/to/image/", cv::IMREAD_COLOR);
   DocColorDecomposer dcd = DocColorDecomposer(src);
 
-  std::vector<cv::Mat> layers = dcd.GetLayers();
-  for (size_t i = 0; i < layers.size(); ++i) {
-    cv::imwrite("layer-" + std::to_string(i + 1) + ".png", layers[i]);
+  for (const auto& [i, layer] : dcd.GetLayers() | std::views::enumerate) {
+    cv::imwrite("layer-" + std::to_string(i + 1) + ".png", layer);
   }
 
-  cv::Mat merged_layers = dcd.MergeLayers();
-  cv::imwrite("merged-layers.png", merged_layers);
+  cv::imwrite("merged-layers.png", dcd.MergeLayers());
+  cv::imwrite("plot-2d-lab.png", dcd.Plot2dLab());
 
-  cv::Mat plot_2d_lab = dcd.Plot2dLab();
-  cv::imwrite("plot-2d-lab.png", plot_2d_lab);
-
-  std::ofstream plot_3d_rgb("plot-3d-rgb.tex");
-  std::ofstream plot_1d_phi("plot-1d-phi.tex");
-  std::ofstream plot_1d_clusters("plot-1d-clusters.tex");
-
-  plot_3d_rgb << dcd.Plot3dRgb();
-  plot_1d_phi << dcd.Plot1dPhi();
-  plot_1d_clusters << dcd.Plot1dClusters();
+  std::ofstream("plot-3d-rgb.tex") << dcd.Plot3dRgb();
+  std::ofstream("plot-1d-phi.tex") << dcd.Plot1dPhi();
+  std::ofstream("plot-1d-clusters.tex") << dcd.Plot1dClusters();
 
   return EXIT_SUCCESS;
 }
