@@ -2,26 +2,6 @@
 
 **Library for documents decomposition by color clustering created using C++ & OpenCV**
 
-<details>
-
-<summary>Table of Contents</summary>
-
-- [Overview](#overview)
-    - [Technologies](#technologies)
-    - [Description](#description)
-    - [Algorithm](#algorithm)
-    - [Features](#features)
-    - [Demonstration](#demonstration)
-- [Usage](#usage)
-    - [App](#app)
-    - [Interface](#interface)
-    - [Example](#example)
-- [License](#license)
-
-</details>
-
----
-
 ## Overview
 
 ### Technologies
@@ -53,7 +33,53 @@ Implementation of the following research article:
 
 ### Demonstration
 
+#### 1
 
+| ![](./data/input/doc-2/up.png) | ![](./data/output/doc-2/up/layers/1.png) | ![](./data/output/doc-2/up/layers/2.png) | ![](./data/output/doc-2/up/layers/3.png) | ![](./data/output/doc-2/up/layers/4.png) |
+|--------------------------------|:----------------------------------------:|:----------------------------------------:|:----------------------------------------:|:----------------------------------------:|
+
+| ![](./data/output/doc-2/up/visualizations/plot-3d-rgb.png) | ![](./data/output/doc-2/up/visualizations/plot-2d-lab.png) | ![](./data/output/doc-2/up/visualizations/plot-1d-phi.png) | ![](./data/output/doc-2/up/visualizations/plot-1d-clusters.png) |
+|:----------------------------------------------------------:|:----------------------------------------------------------:|:----------------------------------------------------------:|:---------------------------------------------------------------:|
+
+#### 2
+
+| ![](./data/input/doc-2/front.png) | ![](./data/output/doc-2/front/layers/1.png) | ![](./data/output/doc-2/front/layers/2.png) | ![](./data/output/doc-2/front/layers/3.png) | ![](./data/output/doc-2/front/layers/4.png) |
+|-----------------------------------|:-------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:|
+
+| ![](./data/output/doc-2/front/visualizations/plot-3d-rgb.png) | ![](./data/output/doc-2/front/visualizations/plot-2d-lab.png) | ![](./data/output/doc-2/front/visualizations/plot-1d-phi.png) | ![](./data/output/doc-2/front/visualizations/plot-1d-clusters.png) |
+|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:------------------------------------------------------------------:|
+
+#### 3
+
+| ![](./data/input/doc-2/right.png) | ![](./data/output/doc-2/right/layers/1.png) | ![](./data/output/doc-2/right/layers/2.png) | ![](./data/output/doc-2/right/layers/3.png) |
+|-----------------------------------|:-------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:|
+
+| ![](./data/output/doc-2/right/visualizations/plot-3d-rgb.png) | ![](./data/output/doc-2/right/visualizations/plot-2d-lab.png) | ![](./data/output/doc-2/right/visualizations/plot-1d-phi.png) | ![](./data/output/doc-2/right/visualizations/plot-1d-clusters.png) |
+|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:------------------------------------------------------------------:|
+
+#### 4
+
+| ![](./data/input/doc-1/up.png) | ![](./data/output/doc-1/up/layers/1.png) | ![](./data/output/doc-1/up/layers/2.png) | ![](./data/output/doc-1/up/layers/3.png) |
+|--------------------------------|:----------------------------------------:|:----------------------------------------:|:----------------------------------------:|
+
+| ![](./data/output/doc-1/up/visualizations/plot-3d-rgb.png) | ![](./data/output/doc-1/up/visualizations/plot-2d-lab.png) | ![](./data/output/doc-1/up/visualizations/plot-1d-phi.png) | ![](./data/output/doc-1/up/visualizations/plot-1d-clusters.png) |
+|:----------------------------------------------------------:|:----------------------------------------------------------:|:----------------------------------------------------------:|:---------------------------------------------------------------:|
+
+#### 5
+
+| ![](./data/input/doc-1/front.png) | ![](./data/output/doc-1/front/layers/1.png) | ![](./data/output/doc-1/front/layers/2.png) | ![](./data/output/doc-1/front/layers/3.png) |
+|-----------------------------------|:-------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:|
+
+| ![](./data/output/doc-1/front/visualizations/plot-3d-rgb.png) | ![](./data/output/doc-1/front/visualizations/plot-2d-lab.png) | ![](./data/output/doc-1/front/visualizations/plot-1d-phi.png) | ![](./data/output/doc-1/front/visualizations/plot-1d-clusters.png) |
+|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:------------------------------------------------------------------:|
+
+#### 6
+
+| ![](./data/input/doc-1/right.png) | ![](./data/output/doc-1/right/layers/1.png) | ![](./data/output/doc-1/right/layers/2.png) | ![](./data/output/doc-1/right/layers/3.png) |
+|-----------------------------------|:-------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:|
+
+| ![](./data/output/doc-1/right/visualizations/plot-3d-rgb.png) | ![](./data/output/doc-1/right/visualizations/plot-2d-lab.png) | ![](./data/output/doc-1/right/visualizations/plot-1d-phi.png) | ![](./data/output/doc-1/right/visualizations/plot-1d-clusters.png) |
+|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:-------------------------------------------------------------:|:------------------------------------------------------------------:|
 
 ## Usage
 
@@ -66,7 +92,6 @@ Implementation of the following research article:
 |       Option       | Usage               |
 |:------------------:|---------------------|
 | `-v` `--visualize` | save visualizations |
-|   `-h` `--help`    | print help message  |
 
 ### Interface
 
