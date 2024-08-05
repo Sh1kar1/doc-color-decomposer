@@ -13,6 +13,14 @@ std::vector<cv::Mat> DocColorDecomposer::GetLayers() const {
   return layers_;
 }
 
+cv::Mat DocColorDecomposer::MergeLayers() {
+  cv::Mat merged_layers(src_.rows, src_.cols, CV_8UC3, cv::Vec3b(255, 255, 255));
+
+  std::ranges::for_each(layers_, [&merged_layers](auto& layer) { layer.copyTo(merged_layers, (layer != cv::Vec3b(255, 255, 255))); });
+
+  return merged_layers;
+}
+
 std::string DocColorDecomposer::Plot3dRgb(int yaw, int pitch) {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
@@ -160,14 +168,6 @@ std::string DocColorDecomposer::Plot1dClusters() {
   plot << "\\end{document}\n";
 
   return plot.str();
-}
-
-cv::Mat DocColorDecomposer::MergeLayers() {
-  cv::Mat merged_layers(src_.rows, src_.cols, CV_8UC3, cv::Vec3b(255, 255, 255));
-
-  std::ranges::for_each(layers_, [&merged_layers](auto& layer) { layer.copyTo(merged_layers, (layer != cv::Vec3b(255, 255, 255))); });
-
-  return merged_layers;
 }
 
 void DocColorDecomposer::ComputePhiHist(int ker_size) {
