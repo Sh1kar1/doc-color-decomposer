@@ -29,9 +29,15 @@ std::string DocColorDecomposer::Plot3dRgb(int yaw, int pitch) {
   std::ranges::shuffle(sorted_color_to_n, std::mt19937(std::random_device()()));
   sorted_color_to_n.resize(std::min(sorted_color_to_n.size(), static_cast<size_t>(7000)));
 
-  plot << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
+  plot << "\\documentclass[tikz, border=1cm]{standalone}\n";
   plot << "\\usepackage{pgfplots}\n";
-  plot << "\\pgfplotsset{compat=newest}\n";
+  plot << "\\pgfplotsset{compat=newest}\n\n";
+
+  plot << "\\usepackage{xcolor}\n";
+  plot << "\\definecolor{gitblue}{HTML}{A5D6FF}\n";
+  plot << "\\pagecolor{black}\n";
+  plot << "\\color{white}\n\n";
+
   plot << "\\begin{document}\n";
   plot << "\\begin{tikzpicture}\n\n";
 
@@ -46,17 +52,16 @@ std::string DocColorDecomposer::Plot3dRgb(int yaw, int pitch) {
   plot << "xtick={0}, ytick={0}, ztick={0},\n";
   plot << "xlabel={$R$}, ylabel={$G$}, zlabel={$B$}]\n\n";
 
-  plot << "\\draw[lightgray] (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
-  plot << "\\draw[lightgray] (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
-  plot << "\\draw[lightgray] (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
-  plot << "\\draw[lightgray] (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
-  plot << "\\draw[lightgray] (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
+  plot << "\\draw[] (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
+  plot << "\\draw[] (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
+  plot << "\\draw[] (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
+  plot << "\\draw[] (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
+  plot << "\\draw[] (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
 
   plot << "\\addplot3[\n";
   plot << "only marks,\n";
-  plot << "mark=*,\n";
-  plot << "mark size=0.1,\n";
-  plot << "color=purple!75]\n";
+  plot << "mark size=0.005cm,\n";
+  plot << "color=gitblue]\n";
   plot << "table[]{\n";
 
   for (const auto& color : sorted_color_to_n | std::views::keys) {
@@ -92,25 +97,28 @@ std::string DocColorDecomposer::Plot1dPhi() {
   double max_n;
   cv::minMaxLoc(phi_hist_, nullptr, &max_n, nullptr, nullptr);
 
-  plot << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
+  plot << "\\documentclass[tikz, border=1cm]{standalone}\n";
   plot << "\\usepackage{pgfplots}\n";
-  plot << "\\pgfplotsset{compat=newest}\n";
+  plot << "\\pgfplotsset{compat=newest}\n\n";
+
+  plot << "\\usepackage{xcolor}\n";
+  plot << "\\definecolor{gitblue}{HTML}{A5D6FF}\n";
+  plot << "\\pagecolor{black}\n";
+  plot << "\\color{white}\n\n";
+
   plot << "\\begin{document}\n";
   plot << "\\begin{tikzpicture}\n\n";
 
   plot << "\\begin{axis}[\n";
   plot << "height=10cm, width=30cm,\n";
   plot << "xmin=0, xmax=360, ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot << "tick align=outside,\n";
-  plot << "grid=both,\n";
-  plot << "yminorgrids=true,\n";
+  plot << "tick style={draw=none},\n";
   plot << "xlabel={$\\phi$}, ylabel={$n$}]\n\n";
 
   plot << "\\addplot[\n";
   plot << "ybar interval,\n";
-  plot << "mark=none,\n";
-  plot << "fill=purple!25,\n";
-  plot << "draw=purple]\n";
+  plot << "fill=gitblue,\n";
+  plot << "draw=gitblue]\n";
   plot << "coordinates{\n";
 
   for (int phi = 0; phi < 360; ++phi) {
@@ -132,37 +140,42 @@ std::string DocColorDecomposer::Plot1dClusters() {
   double max_n;
   cv::minMaxLoc(smoothed_phi_hist_, nullptr, &max_n, nullptr, nullptr);
 
-  plot << "\\documentclass[tikz, border=0.1cm]{standalone}\n";
+  plot << "\\documentclass[tikz, border=1cm]{standalone}\n";
   plot << "\\usepackage{pgfplots}\n";
-  plot << "\\pgfplotsset{compat=newest}\n";
+  plot << "\\pgfplotsset{compat=newest}\n\n";
+
+  plot << "\\usepackage{xcolor}\n";
+  plot << "\\definecolor{gitblue}{HTML}{A5D6FF}\n";
+  plot << "\\definecolor{gitred}{HTML}{FF7B72}\n";
+  plot << "\\pagecolor{black}\n";
+  plot << "\\color{white}\n\n";
+
   plot << "\\begin{document}\n";
   plot << "\\begin{tikzpicture}\n\n";
 
   plot << "\\begin{axis}[\n";
   plot << "height=10cm, width=30cm,\n";
   plot << "xmin=0, xmax=360, ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot << "tick align=outside,\n";
-  plot << "grid=both,\n";
-  plot << "yminorgrids=true,\n";
+  plot << "tick style={draw=none},\n";
   plot << "xlabel={$\\phi$}, ylabel={$n$}]\n\n";
 
   plot << "\\addplot[\n";
   plot << "ybar interval,\n";
-  plot << "mark=none,\n";
-  plot << "fill=purple!25,\n";
-  plot << "draw=purple]\n";
+  plot << "fill=gitblue,\n";
+  plot << "draw=gitblue]\n";
   plot << "coordinates{\n";
 
   for (int phi = 0; phi < 360; ++phi) {
     plot << '(' << phi << ',' << smoothed_phi_hist_.at<int>(phi) << ")\n";
   }
+
   plot << "};\n\n";
 
   for (const auto& cluster : phi_clusters_) {
-    plot << "\\draw[cyan!75, thick] (axis cs:" << cluster << ",0) -- (axis cs:" << cluster << ',' << std::lround(max_n) << ");\n";
+    plot << "\\draw[gitred, line width=0.1cm] (axis cs:" << cluster << ",0) -- (axis cs:" << cluster << ',' << std::lround(max_n) << ");\n";
   }
-  plot << '\n';
 
+  plot << '\n';
   plot << "\\end{axis}\n";
   plot << "\\end{tikzpicture}\n";
   plot << "\\end{document}\n";
