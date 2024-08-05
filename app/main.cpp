@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     }
 
     std::vector<cv::Mat> layers = dcd.GetLayers();
-    for (int i = 0; i < layers.size(); ++i) {
+    for (size_t i = 0; i < layers.size(); ++i) {
       cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(i + 1) + ".png", layers[i]);
     }
 
@@ -59,11 +59,16 @@ int main(int argc, char** argv) {
     std::cout << "Success: files saved";
 
   } else if (args.size() == 1 || args.size() == 2 && (args[1] == "--help" || args[1] == "-h")) {
-    std::cout << "USAGE\n";
-    std::cout << "    ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]\n";
+    std::cout << "DESCRIPTION\n";
+    std::cout << "  App of the `Doc Color Decomposer` library for documents decomposition by color clustering\n";
+    std::cout << "  More info: https://github.com/Sh1kar1/doc-color-decomposer\n";
+
+    std::cout << "SYNOPSIS\n";
+    std::cout << "  ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]\n";
 
     std::cout << "OPTIONS\n";
-    std::cout << "    -v, --visualize    Save visualizations";
+    std::cout << "  -v, --visualize  Save visualizations\n";
+    std::cout << "  -h, --help       Print help message";
 
   } else {
     std::cerr << "Error: invalid arguments";

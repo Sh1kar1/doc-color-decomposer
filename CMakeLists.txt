@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 project(doc_color_decomposer LANGUAGES CXX)
 
@@ -13,4 +13,4 @@ install(DIRECTORY include DESTINATION .)
 install(DIRECTORY data DESTINATION .)
 
 add_subdirectory(src)
-add_subdirectory(example)
+add_subdirectory(app)
