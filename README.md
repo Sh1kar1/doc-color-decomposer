@@ -12,8 +12,10 @@
     - [Algorithm](#algorithm)
     - [Features](#features)
     - [Demonstration](#demonstration)
-- [Installation](#installation)
 - [Usage](#usage)
+    - [App](#app)
+    - [Interface](#interface)
+    - [Example](#example)
 - [License](#license)
 
 </details>
@@ -24,13 +26,8 @@
 
 ### Technologies
 
-#### Languages
-
 - C++ & CMake
 - LaTeX
-
-#### Dependencies
-
 - [OpenCV](https://opencv.org/)
 
 ### Description
@@ -50,20 +47,151 @@ Implementation of the following research article:
 ### Features
 
 - API
-- Demo CLI app
-- Optional LaTeX visualizations
+- CLI app
+- LaTeX visualizations
+- Test data
 
 ### Demonstration
 
 
 
-## Installation
-
-
-
 ## Usage
 
+### App
 
+```
+./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]
+```
+
+|       Option       | Usage               |
+|:------------------:|---------------------|
+| `-v` `--visualize` | save visualizations |
+|   `-h` `--help`    | print help message  |
+
+### Interface
+
+- ```c++
+  explicit DocColorDecomposer::DocColorDecomposer() = default
+  ```
+
+  Constructs an empty instance
+
+<br>
+
+- ```c++
+  explicit DocColorDecomposer::DocColorDecomposer(const cv::Mat& src)
+  ```
+
+  Constructs an instance from the given document and pre-computes its layers
+
+  | Parameter | Description                                     |
+  |:---------:|-------------------------------------------------|
+  |   `src`   | source image of the document in the sRGB format |
+
+<br>
+
+- ```c++
+  [[nodiscard]] std::vector<cv::Mat> DocColorDecomposer::GetLayers() const
+  ```
+
+  Retrieves the pre-computed layers
+
+  Returns the list of the decomposed document layers in the sRGB format with a white background
+
+<br>
+
+- ```c++
+  [[nodiscard]] cv::Mat DocColorDecomposer::MergeLayers()
+  ```
+
+  Merges the pre-computed layers for testing
+
+  Returns the image of the merged layers in the sRGB format that must be the same as the source document
+
+<br>
+
+- ```c++
+  [[nodiscard]] std::string DocColorDecomposer::Plot3dRgb(int yaw = 115, int pitch = 15)
+  ```
+
+  Generates a 3D scatter plot of the document colors in the linRGB space
+
+  Returns the LaTeX code of the plot that can be saved in the .tex format and compiled
+
+  | Parameter | Description                                 |
+  |:---------:|---------------------------------------------|
+  |   `yaw`   | yaw-rotation angle of the view in degrees   |
+  |  `pitch`  | pitch-rotation angle of the view in degrees |
+
+<br>
+
+- ```c++
+  [[nodiscard]] cv::Mat DocColorDecomposer::Plot2dLab()
+  ```
+
+  Generates a 2D scatter plot of the document colors projections on the $\alpha\beta$ plane
+
+  Returns the image of the plot in the sRGB format
+
+<br>
+
+- ```c++
+  [[nodiscard]] std::string DocColorDecomposer::Plot1dPhi()
+  ```
+
+  Generates a 1D histogram plot with respect to the rotation angle $\phi$
+
+  Returns the LaTeX code of the plot that can be saved in the .tex format and compiled
+
+<br>
+
+- ```c++
+  [[nodiscard]] std::string DocColorDecomposer::Plot1dClusters()
+  ```
+
+  Generates a smoothed and separated by clusters 1D histogram plot with respect to the rotation angle $\phi$
+
+  Returns the LaTeX code of the plot that can be saved in the .tex format and compiled
+
+### Example
+
+```c++
+#include "doc_color_decomposer/doc_color_decomposer.h"
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include <string>
+#include <vector>
+
+#include <fstream>
+
+int main() {
+  cv::Mat src = cv::imread("/path/to/image/", cv::IMREAD_COLOR);
+  DocColorDecomposer dcd = DocColorDecomposer(src);
+
+  std::vector<cv::Mat> layers = dcd.GetLayers();
+  for (size_t i = 0; i < layers.size(); ++i) {
+    cv::imwrite("layer-" + std::to_string(i + 1) + ".png", layers[i]);
+  }
+
+  cv::Mat merged_layers = dcd.MergeLayers();
+  cv::imwrite("merged-layers.png", merged_layers);
+
+  cv::Mat plot_2d_lab = dcd.Plot2dLab();
+  cv::imwrite("plot-2d-lab.png", plot_2d_lab);
+
+  std::ofstream plot_3d_rgb("plot-3d-rgb.tex");
+  std::ofstream plot_1d_phi("plot-1d-phi.tex");
+  std::ofstream plot_1d_clusters("plot-1d-clusters.tex");
+
+  plot_3d_rgb << dcd.Plot3dRgb();
+  plot_1d_phi << dcd.Plot1dPhi();
+  plot_1d_clusters << dcd.Plot1dClusters();
+
+  return EXIT_SUCCESS;
+}
+```
 
 ## License
 
