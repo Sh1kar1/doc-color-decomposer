@@ -104,14 +104,16 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  explicit DocColorDecomposer::DocColorDecomposer(const cv::Mat& src)
+  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 25, bool preprocessing = true)
   ```
 
-  Constructs an instance from the given document and pre-computes its layers
+  Constructs an instance from the given document and precomputes its layers
 
-  | Parameter | Description                                     |
-  |:---------:|-------------------------------------------------|
-  |   `src`   | source image of the document in the sRGB format |
+  |    Parameter    | Description                                                                 |
+  |:---------------:|-----------------------------------------------------------------------------|
+  |      `src`      | source image of the document in the sRGB format                             |
+  |   `tolerance`   | odd positive value with an increase of which the number of layers decreases |
+  | `preprocessing` | true if the source image needs to be processed by aberration reduction      |
 
 <br>
 
@@ -119,7 +121,7 @@ Implementation of the following research article:
   [[nodiscard]] std::vector<cv::Mat> DocColorDecomposer::GetLayers() const
   ```
 
-  Retrieves the pre-computed layers
+  Retrieves the precomputed layers
 
   Returns the list of the decomposed document layers in the sRGB format with a white background
 
@@ -129,7 +131,7 @@ Implementation of the following research article:
   [[nodiscard]] cv::Mat DocColorDecomposer::MergeLayers()
   ```
 
-  Merges the pre-computed layers for testing
+  Merges the precomputed layers for testing
 
   Returns the image of the merged layers in the sRGB format that must be the same as the source document
 
