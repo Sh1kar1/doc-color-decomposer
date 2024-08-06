@@ -27,21 +27,23 @@ public:
   explicit DocColorDecomposer() = default;
 
   /**
-   * @brief Constructs an instance from the given document and pre-computes its layers
+   * @brief Constructs an instance from the given document and precomputes its layers
    *
    * @param[in] src source image of the document in the sRGB format
+   * @param[in] tolerance odd positive value with an increase of which the number of layers decreases
+   * @param[in] preprocessing true if the source image needs to be processed by aberration reduction
    */
-  explicit DocColorDecomposer(const cv::Mat& src);
+  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 25, bool preprocessing = true);
 
   /**
-   * @brief Retrieves the pre-computed layers
+   * @brief Retrieves the precomputed layers
    *
    * @return list of the decomposed document layers in the sRGB format with a white background
    */
   [[nodiscard]] std::vector<cv::Mat> GetLayers() const;
 
   /**
-   * @brief Merges the pre-computed layers for testing
+   * @brief Merges the precomputed layers for testing
    *
    * @return image of the merged layers in the sRGB format that must be the same as the source document
    */
@@ -79,7 +81,7 @@ public:
   [[nodiscard]] std::string Plot1dClusters();
 
 private:
-  void ComputePhiHist(int ker_size = 25);
+  void ComputePhiHist();
   void ComputePhiClusters();
   void ComputeLayers();
 
@@ -93,6 +95,7 @@ private:
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
 
   cv::Mat src_;
+  int tolerance_{};
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> phi_clusters_;

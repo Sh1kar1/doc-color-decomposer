@@ -1,7 +1,8 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
-DocColorDecomposer::DocColorDecomposer(const cv::Mat& src) {
-  src_ = CvtSRgbToLinRgb(ThreshLightness(ThreshSaturation(SmoothHue(src))));
+DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool preprocessing) {
+  src_ = preprocessing ? CvtSRgbToLinRgb(ThreshLightness(ThreshSaturation(SmoothHue(src)))) : CvtSRgbToLinRgb(src);
+  tolerance_ = tolerance;
   color_to_n_ = LutColorToN(src_);
 
   ComputePhiHist();
@@ -183,7 +184,7 @@ std::string DocColorDecomposer::Plot1dClusters() {
   return plot.str();
 }
 
-void DocColorDecomposer::ComputePhiHist(int ker_size) {
+void DocColorDecomposer::ComputePhiHist() {
   phi_hist_ = cv::Mat::zeros(1, 360, CV_64F);
 
   for (const auto& [color, n] : color_to_n_) {
@@ -199,7 +200,7 @@ void DocColorDecomposer::ComputePhiHist(int ker_size) {
     }
   }
 
-  cv::GaussianBlur(phi_hist_, smoothed_phi_hist_, cv::Size(ker_size, ker_size), 0.0);
+  cv::GaussianBlur(phi_hist_, smoothed_phi_hist_, cv::Size(tolerance_, tolerance_), 0.0);
   smoothed_phi_hist_.convertTo(smoothed_phi_hist_, CV_32S);
 }
 
