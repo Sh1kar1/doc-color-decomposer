@@ -10,6 +10,13 @@
 - LaTeX
 - [OpenCV](https://opencv.org/)
 
+### Features
+
+- API
+- CLI app
+- Optional visualizations
+- Test data
+
 ### Description
 
 Implementation of the following research article:
@@ -23,13 +30,6 @@ Implementation of the following research article:
 4. Histogram calculation with respect to the rotation angle $\phi$
 5. Clustering by peak detection in the histogram
 6. Decomposition into layers via clusters
-
-### Features
-
-- API
-- CLI app
-- LaTeX visualizations
-- Test data
 
 ### Demonstration
 
@@ -89,9 +89,11 @@ Implementation of the following research article:
 ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]
 ```
 
-|       Option       | Usage               |
-|:------------------:|---------------------|
-| `-v` `--visualize` | save visualizations |
+|               Option               | Usage                                        |
+|:----------------------------------:|----------------------------------------------|
+| `--tolerance=<odd-positive-value>` | set tolerance of decomposition (default: 25) |
+|          `--nopreprocess`          | disable image preprocessing                  |
+|           `--visualize`            | save visualizations                          |
 
 ### Interface
 
