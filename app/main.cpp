@@ -4,6 +4,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/utils/logger.hpp>
 
+#include <regex>
+
 #include <filesystem>
 
 #include <ranges>
@@ -15,26 +17,49 @@
 #include <fstream>
 
 int main(int argc, char** argv) {
-  std::vector<std::string> args(argv, argv + argc);
+  std::vector<std::string> args(argv + 1, argv + argc);
 
-  cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
+  if (args.size() >= 2) {
+    std::filesystem::path src_path = args[0];
+    std::filesystem::path dst_path = args[1];
 
-  if (args.size() == 3 || args.size() == 4 && (args[3] == "--visualize" || args[3] == "-v")) {
-    std::filesystem::path src_path = args[1];
-    std::filesystem::path dst_path = args[2];
-    bool visualize = args.size() == 4;
+    int tolerance = 25;
+    bool nopreprocess = false;
+    bool visualize = false;
+
+    for (const auto& arg : args | std::views::drop(2)) {
+      if (std::regex_match(arg, std::regex("^--tolerance=[0-9]*[13579]$"))) {
+        tolerance = std::stoi(arg.substr(std::string("--tolerance=").size()));
+      } else if (arg == "--nopreprocess") {
+        nopreprocess = true;
+      } else if (arg == "--visualize") {
+        visualize = true;
+      } else {
+        std::cerr << "Error: invalid arguments\n";
+        std::cerr << "Checkout `./doc_color_decomposer_app --help`";
+        return EXIT_FAILURE;
+      }
+    }
+
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
+
+    try {
+      if (!std::filesystem::exists(dst_path) || !std::filesystem::is_directory(dst_path)) {
+        std::filesystem::create_directory(dst_path);
+      }
+    } catch (...) {
+      std::cerr << "Error: invalid arguments\n";
+      std::cerr << "Checkout `./doc_color_decomposer_app --help`";
+      return EXIT_FAILURE;
+    }
 
     DocColorDecomposer dcd;
     try {
       cv::Mat src = cv::imread(src_path.string(), cv::IMREAD_COLOR);
-      dcd = DocColorDecomposer(src);
+      dcd = DocColorDecomposer(src, tolerance, !nopreprocess);
     } catch (...) {
       std::cerr << "Error: invalid image";
       return EXIT_FAILURE;
-    }
-
-    if (!std::filesystem::exists(dst_path) || !std::filesystem::is_directory(dst_path)) {
-      std::filesystem::create_directory(dst_path);
     }
 
     for (const auto& [i, layer] : dcd.GetLayers() | std::views::enumerate) {
@@ -52,20 +77,22 @@ int main(int argc, char** argv) {
 
     std::cout << "Success: files saved";
 
-  } else if (args.size() == 1 || args.size() == 2 && (args[1] == "--help" || args[1] == "-h")) {
+  } else if (args.empty() || args.size() == 1 && (args[0] == "--help" || args[0] == "-h")) {
     std::cout << "DESCRIPTION\n";
     std::cout << "  App of the `Doc Color Decomposer` library for documents decomposition by color clustering\n";
-    std::cout << "  More info: https://github.com/Sh1kar1/doc-color-decomposer\n";
+    std::cout << "  More info: https://github.com/Sh1kar1/doc-color-decomposer\n\n";
 
     std::cout << "SYNOPSIS\n";
-    std::cout << "  ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]\n";
+    std::cout << "  ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]\n\n";
 
     std::cout << "OPTIONS\n";
-    std::cout << "  -v, --visualize  Save visualizations\n";
-    std::cout << "  -h, --help       Print help message";
+    std::cout << "  --tolerance=<odd-positive-value>  Set tolerance of decomposition (default: 25)\n";
+    std::cout << "  --nopreprocess                    Disable image preprocessing\n";
+    std::cout << "  --visualize                       Save visualizations";
 
   } else {
-    std::cerr << "Error: invalid arguments";
+    std::cerr << "Error: invalid arguments\n";
+    std::cerr << "Checkout `./doc_color_decomposer_app --help`";
     return EXIT_FAILURE;
   }
 
