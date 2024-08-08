@@ -98,7 +98,7 @@ Implementation of the following research article:
 ### Interface
 
 - ```c++
-  explicit DocColorDecomposer::DocColorDecomposer() = default
+  explicit DocColorDecomposer() = default
   ```
 
   Constructs an empty instance
@@ -106,7 +106,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  explicit DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance = 25, bool preprocessing = true)
+  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 25, bool preprocessing = true)
   ```
 
   Constructs an instance from the given document and precomputes its layers
