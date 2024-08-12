@@ -58,7 +58,7 @@ public:
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot3dRgb(int yaw = 115, int pitch = 15);
+  [[nodiscard]] std::string Plot3dRgb(double yaw = 135.0, double pitch = 35.25);
 
   /**
    * @brief Generates a 2D scatter plot of the document colors projections on the \f$\alpha\beta\f$ plane
