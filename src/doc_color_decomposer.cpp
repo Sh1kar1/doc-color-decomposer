@@ -26,7 +26,7 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<std::pair<std::tuple<float, float, float>, long long>> sorted_color_to_n(color_to_n_.begin(), color_to_n_.end());
+  std::vector<std::pair<std::array<float, 3>, long long>> sorted_color_to_n(color_to_n_.begin(), color_to_n_.end());
   std::ranges::shuffle(sorted_color_to_n, std::mt19937(std::random_device()()));
   sorted_color_to_n.resize(std::min(sorted_color_to_n.size(), static_cast<size_t>(5000)));
 
@@ -64,7 +64,7 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
   plot << "R G B\n";
 
   for (const auto& color : sorted_color_to_n | std::views::keys) {
-    plot << std::get<0>(color) << ' ' << std::get<1>(color) << ' ' << std::get<2>(color) << '\n';
+    plot << color[0] << ' ' << color[1] << ' ' << color[2] << '\n';
   }
 
   plot << "};\n";
@@ -97,12 +97,12 @@ cv::Mat DocColorDecomposer::Plot2dLab() {
   cv::Mat plot(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
 
   for (const auto& color : color_to_n_ | std::views::keys) {
-    cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
+    cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
     cv::Mat lab_point = ProjOnLab(rgb_point);
     int y = std::lround(255.0F * (lab_point.at<float>(0, 1) + 2.5F));
     int x = std::lround(255.0F * (lab_point.at<float>(0, 0) + 2.5F));
 
-    plot.at<cv::Vec3f>(y, x) = cv::Vec3f(std::get<2>(color), std::get<1>(color), std::get<0>(color));
+    plot.at<cv::Vec3f>(y, x) = cv::Vec3f(color[2], color[1], color[0]);
   }
 
   return CvtLinRgbToSRgb(plot);
@@ -133,12 +133,12 @@ std::string DocColorDecomposer::Plot1dPhi() {
   plot << "]\n\n";
 
   for (int phi = 0; phi < 359; ++phi) {
-    std::tuple<float, float, float> mean_color = phi_to_mean_color_[phi];
+    std::array<float, 3> mean_color = phi_to_mean_color_[phi];
 
     plot << "\\addplot[\n";
     plot << "ybar interval,\n";
-    plot << "color={rgb,1: red," << std::get<0>(mean_color) << "; green," << std::get<1>(mean_color) << "; blue," << std::get<2>(mean_color) << "},\n";
-    plot << "fill={rgb,1: red," << std::get<0>(mean_color) << "; green," << std::get<1>(mean_color) << "; blue," << std::get<2>(mean_color) << "}\n";
+    plot << "color={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "},\n";
+    plot << "fill={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "}\n";
     plot << "] table[] {\n";
     plot << "X Y\n";
     plot << phi << ' ' << std::lround(phi_hist_.at<double>(phi)) << '\n';
@@ -179,12 +179,12 @@ std::string DocColorDecomposer::Plot1dClusters() {
 
   for (int phi = 0; phi < 359; ++phi) {
     int cluster = phi_to_cluster_[phi];
-    std::tuple<float, float, float> mean_color = cluster_to_mean_color_[cluster];
+    std::array<float, 3> mean_color = cluster_to_mean_color_[cluster];
 
     plot << "\\addplot[\n";
     plot << "ybar interval,\n";
-    plot << "color={rgb,1: red," << std::get<0>(mean_color) << "; green," << std::get<1>(mean_color) << "; blue," << std::get<2>(mean_color) << "},\n";
-    plot << "fill={rgb,1: red," << std::get<0>(mean_color) << "; green," << std::get<1>(mean_color) << "; blue," << std::get<2>(mean_color) << "}\n";
+    plot << "color={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "},\n";
+    plot << "fill={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "}\n";
     plot << "] table[] {\n";
     plot << "X Y\n";
     plot << phi << ' ' << std::lround(smoothed_phi_hist_.at<int>(phi)) << '\n';
@@ -203,8 +203,8 @@ void DocColorDecomposer::ComputePhiHist() {
   phi_hist_ = cv::Mat::zeros(1, 360, CV_64F);
 
   for (const auto& [color, n] : color_to_n_) {
-    if (std::get<0>(color) != std::get<1>(color) || std::get<1>(color) != std::get<2>(color) || std::get<0>(color) != std::get<2>(color)) {
-      cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << std::get<0>(color), std::get<1>(color), std::get<2>(color));
+    if (color[0] != color[1] || color[1] != color[2] || color[0] != color[2]) {
+      cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
       cv::Mat lab_point = ProjOnLab(rgb_point);
       float phi_rad = std::atan2(-lab_point.at<float>(0, 1), lab_point.at<float>(0, 0));
       int phi = std::lround((phi_rad * 180.0F / CV_PI) + 360.0F) % 360;
@@ -249,13 +249,13 @@ void DocColorDecomposer::ComputeLayers() {
 
   phi_to_n_ = std::vector<long long>(360);
   cluster_to_n_ = std::vector<long long>(phi_clusters_.size() + 1);
-  phi_to_mean_color_ = std::vector<std::tuple<float, float, float>>(360);
-  cluster_to_mean_color_ = std::vector<std::tuple<float, float, float>>(phi_clusters_.size() + 1);
+  phi_to_mean_color_ = std::vector<std::array<float, 3>>(360);
+  cluster_to_mean_color_ = std::vector<std::array<float, 3>>(phi_clusters_.size() + 1);
 
   for (int y = 0; y < src_.rows; ++y) {
     for (int x = 0; x < src_.cols; ++x) {
       auto& pixel = src_.at<cv::Vec3f>(y, x);
-      std::tuple<float, float, float> color = std::make_tuple(pixel[2], pixel[1], pixel[0]);
+      std::array<float, 3> color = {pixel[2], pixel[1], pixel[0]};
       int phi = color_to_phi_[color];
       int cluster = (phi != -1) ? phi_to_cluster_[phi] : 0;
 
@@ -263,23 +263,23 @@ void DocColorDecomposer::ComputeLayers() {
 
       if (phi != -1) {
         auto n = static_cast<float>(phi_to_n_[phi]);
-        std::tuple<float, float, float> mean_color = phi_to_mean_color_[phi];
-        float r = (std::get<0>(color) + n * std::get<0>(mean_color)) / (n + 1);
-        float g = (std::get<1>(color) + n * std::get<1>(mean_color)) / (n + 1);
-        float b = (std::get<2>(color) + n * std::get<2>(mean_color)) / (n + 1);
+        std::array<float, 3> mean_color = phi_to_mean_color_[phi];
+        float r = (color[0] + n * mean_color[0]) / (n + 1);
+        float g = (color[1] + n * mean_color[1]) / (n + 1);
+        float b = (color[2] + n * mean_color[2]) / (n + 1);
 
-        phi_to_mean_color_[phi] = std::make_tuple(r, g, b);
+        phi_to_mean_color_[phi] = {r, g, b};
         ++phi_to_n_[phi];
       }
 
       if (cluster != 0) {
         auto n = static_cast<float>(cluster_to_n_[cluster]);
-        std::tuple<float, float, float> mean_color = cluster_to_mean_color_[cluster];
-        float r = (std::get<0>(color) + n * std::get<0>(mean_color)) / (n + 1);
-        float g = (std::get<1>(color) + n * std::get<1>(mean_color)) / (n + 1);
-        float b = (std::get<2>(color) + n * std::get<2>(mean_color)) / (n + 1);
+        std::array<float, 3> mean_color = cluster_to_mean_color_[cluster];
+        float r = (color[0] + n * mean_color[0]) / (n + 1);
+        float g = (color[1] + n * mean_color[1]) / (n + 1);
+        float b = (color[2] + n * mean_color[2]) / (n + 1);
 
-        cluster_to_mean_color_[cluster] = std::make_tuple(r, g, b);
+        cluster_to_mean_color_[cluster] = {r, g, b};
         ++cluster_to_n_[cluster];
       }
     }
@@ -357,13 +357,13 @@ cv::Mat DocColorDecomposer::CvtLinRgbToSRgb(cv::Mat src) {
   return src;
 }
 
-std::map<std::tuple<float, float, float>, long long> DocColorDecomposer::LutColorToN(const cv::Mat& src) {
-  std::map<std::tuple<float, float, float>, long long> color_to_n;
+std::map<std::array<float, 3>, long long> DocColorDecomposer::LutColorToN(const cv::Mat& src) {
+  std::map<std::array<float, 3>, long long> color_to_n;
 
   for (int y = 0; y < src.rows; ++y) {
     for (int x = 0; x < src.cols; ++x) {
       cv::Vec3f pixel = src.at<cv::Vec3f>(y, x);
-      std::tuple<float, float, float> color = std::make_tuple(pixel[2], pixel[1], pixel[0]);
+      std::array<float, 3> color = {pixel[2], pixel[1], pixel[0]};
 
       ++color_to_n[color];
     }

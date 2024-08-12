@@ -8,9 +8,9 @@
 
 #include <ranges>
 
+#include <array>
 #include <map>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include <iomanip>
@@ -91,7 +91,7 @@ private:
   [[nodiscard]] static cv::Mat ThreshLightness(cv::Mat src, double thresh = 55.0);
   [[nodiscard]] static cv::Mat CvtSRgbToLinRgb(cv::Mat src);
   [[nodiscard]] static cv::Mat CvtLinRgbToSRgb(cv::Mat src);
-  [[nodiscard]] static std::map<std::tuple<float, float, float>, long long> LutColorToN(const cv::Mat& src);
+  [[nodiscard]] static std::map<std::array<float, 3>, long long> LutColorToN(const cv::Mat& src);
   [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb_point);
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
 
@@ -100,13 +100,13 @@ private:
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> phi_clusters_;
-  std::map<std::tuple<float, float, float>, long long> color_to_n_;
+  std::map<std::array<float, 3>, long long> color_to_n_;
   std::vector<long long> phi_to_n_;
   std::vector<long long> cluster_to_n_;
-  std::map<std::tuple<float, float, float>, int> color_to_phi_;
+  std::map<std::array<float, 3>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
-  std::vector<std::tuple<float, float, float>> phi_to_mean_color_;
-  std::vector<std::tuple<float, float, float>> cluster_to_mean_color_;
+  std::vector<std::array<float, 3>> phi_to_mean_color_;
+  std::vector<std::array<float, 3>> cluster_to_mean_color_;
   std::vector<cv::Mat> layers_;
 };
 
