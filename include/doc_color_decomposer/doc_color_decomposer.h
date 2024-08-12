@@ -96,13 +96,17 @@ private:
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
 
   cv::Mat src_;
-  int tolerance_{};
+  int tolerance_;
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> phi_clusters_;
   std::map<std::tuple<float, float, float>, long long> color_to_n_;
+  std::vector<long long> phi_to_n_;
+  std::vector<long long> cluster_to_n_;
   std::map<std::tuple<float, float, float>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
+  std::vector<std::tuple<float, float, float>> phi_to_mean_color_;
+  std::vector<std::tuple<float, float, float>> cluster_to_mean_color_;
   std::vector<cv::Mat> layers_;
 };
 
