@@ -1,4 +1,4 @@
-project(${CMAKE_PROJECT_NAME}_library LANGUAGES CXX)
+project(${CMAKE_PROJECT_NAME}-library LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC doc_color_decomposer.cpp)
 

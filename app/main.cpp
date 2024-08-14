@@ -1,7 +1,7 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <opencv2/core/utils/logger.hpp>
 
 #include <regex>
@@ -23,20 +23,22 @@ int main(int argc, char** argv) {
     std::filesystem::path src_path = args[0];
     std::filesystem::path dst_path = args[1];
 
-    int tolerance = 25;
+    int tolerance = 35;
     bool nopreprocess = false;
     bool visualize = false;
 
     for (const auto& arg : args | std::views::drop(2)) {
       if (std::regex_match(arg, std::regex("^--tolerance=[0-9]*[13579]$"))) {
         tolerance = std::stoi(arg.substr(std::string("--tolerance=").size()));
+
       } else if (arg == "--nopreprocess") {
         nopreprocess = true;
       } else if (arg == "--visualize") {
         visualize = true;
+
       } else {
         std::cerr << "Error: invalid arguments\n";
-        std::cerr << "Checkout `./doc_color_decomposer_app --help`";
+        std::cerr << "Checkout `./doc-color-decomposer-app --help`";
         return EXIT_FAILURE;
       }
     }
@@ -47,9 +49,10 @@ int main(int argc, char** argv) {
       if (!std::filesystem::exists(dst_path) || !std::filesystem::is_directory(dst_path)) {
         std::filesystem::create_directory(dst_path);
       }
+
     } catch (...) {
       std::cerr << "Error: invalid arguments\n";
-      std::cerr << "Checkout `./doc_color_decomposer_app --help`";
+      std::cerr << "Checkout `./doc-color-decomposer-app --help`";
       return EXIT_FAILURE;
     }
 
@@ -57,6 +60,7 @@ int main(int argc, char** argv) {
     try {
       cv::Mat src = cv::imread(src_path.string(), cv::IMREAD_COLOR);
       dcd = DocColorDecomposer(src, tolerance, !nopreprocess);
+
     } catch (...) {
       std::cerr << "Error: invalid image";
       return EXIT_FAILURE;
@@ -83,16 +87,16 @@ int main(int argc, char** argv) {
     std::cout << "  More info: https://github.com/Sh1kar1/doc-color-decomposer\n\n";
 
     std::cout << "SYNOPSIS\n";
-    std::cout << "  ./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]\n\n";
+    std::cout << "  ./doc-color-decomposer-app <path-to-image> <path-to-output-directory> [options]\n\n";
 
     std::cout << "OPTIONS\n";
-    std::cout << "  --tolerance=<odd-positive-value>  Set tolerance of decomposition (default: 25)\n";
+    std::cout << "  --tolerance=<odd-positive-value>  Set tolerance of decomposition (default: 35)\n";
     std::cout << "  --nopreprocess                    Disable image preprocessing\n";
     std::cout << "  --visualize                       Save visualizations";
 
   } else {
     std::cerr << "Error: invalid arguments\n";
-    std::cerr << "Checkout `./doc_color_decomposer_app --help`";
+    std::cerr << "Checkout `./doc-color-decomposer-app --help`";
     return EXIT_FAILURE;
   }
 
