@@ -3,6 +3,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 
 #include <random>
 
@@ -34,7 +35,7 @@ public:
    * @param[in] tolerance odd positive value with an increase of which the number of layers decreases
    * @param[in] preprocessing true if the source image needs to be processed by aberration reduction
    */
-  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 25, bool preprocessing = true);
+  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 35, bool preprocessing = true);
 
   /**
    * @brief Retrieves the precomputed layers
@@ -68,14 +69,14 @@ public:
   [[nodiscard]] cv::Mat Plot2dLab();
 
   /**
-   * @brief Generates a 1D histogram plot with respect to the rotation angle \f$\phi\f$
+   * @brief Generates a 1D histogram plot with respect to the angle \f$\phi\f$ in polar coordinates
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
   [[nodiscard]] std::string Plot1dPhi();
 
   /**
-   * @brief Generates a smoothed and separated by clusters 1D histogram plot with respect to the rotation angle \f$\phi\f$
+   * @brief Generates a smoothed and separated by clusters 1D histogram plot
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
@@ -86,21 +87,22 @@ private:
   void ComputePhiClusters();
   void ComputeLayers();
 
-  [[nodiscard]] static cv::Mat SmoothHue(cv::Mat src, int ker_size = 5);
-  [[nodiscard]] static cv::Mat ThreshSaturation(cv::Mat src, double thresh = 15.0);
-  [[nodiscard]] static cv::Mat ThreshLightness(cv::Mat src, double thresh = 55.0);
+  [[nodiscard]] static cv::Mat ThreshSaturation(cv::Mat src, double thresh = 10.0);
+  [[nodiscard]] static cv::Mat ThreshLightness(cv::Mat src, double thresh = 50.0);
   [[nodiscard]] static cv::Mat CvtSRgbToLinRgb(cv::Mat src);
   [[nodiscard]] static cv::Mat CvtLinRgbToSRgb(cv::Mat src);
   [[nodiscard]] static std::map<std::array<float, 3>, long long> LutColorToN(const cv::Mat& src);
-  [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb_point);
+  [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb);
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
 
   cv::Mat src_;
+  cv::Mat processed_src_;
   int tolerance_;
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> phi_clusters_;
   std::map<std::array<float, 3>, long long> color_to_n_;
+  std::map<std::array<float, 3>, cv::Mat> color_to_lab_;
   std::vector<long long> phi_to_n_;
   std::vector<long long> cluster_to_n_;
   std::map<std::array<float, 3>, int> color_to_phi_;

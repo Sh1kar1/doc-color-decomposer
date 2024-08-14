@@ -1,9 +1,13 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
+#include "../src/plot_2d_lab_image.h"
+
 DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool preprocessing) {
-  src_ = preprocessing ? CvtSRgbToLinRgb(ThreshLightness(ThreshSaturation(SmoothHue(src)))) : CvtSRgbToLinRgb(src);
+  src_ = CvtSRgbToLinRgb(src);
+  processed_src_ = preprocessing ? CvtSRgbToLinRgb(ThreshLightness(ThreshSaturation(src))) : src_;
   tolerance_ = tolerance;
-  color_to_n_ = LutColorToN(src_);
+
+  color_to_n_ = LutColorToN(processed_src_);
 
   ComputePhiHist();
   ComputePhiClusters();
@@ -15,7 +19,7 @@ std::vector<cv::Mat> DocColorDecomposer::GetLayers() const {
 }
 
 cv::Mat DocColorDecomposer::MergeLayers() {
-  cv::Mat merged_layers(src_.rows, src_.cols, CV_8UC3, cv::Vec3b(255, 255, 255));
+  cv::Mat merged_layers(processed_src_.rows, processed_src_.cols, CV_8UC3, cv::Vec3b(255, 255, 255));
 
   std::ranges::for_each(layers_, [&merged_layers](auto& layer) { layer.copyTo(merged_layers, (layer != cv::Vec3b(255, 255, 255))); });
 
@@ -25,10 +29,6 @@ cv::Mat DocColorDecomposer::MergeLayers() {
 std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
-
-  std::vector<std::pair<std::array<float, 3>, long long>> sorted_color_to_n(color_to_n_.begin(), color_to_n_.end());
-  std::ranges::shuffle(sorted_color_to_n, std::mt19937(std::random_device()()));
-  sorted_color_to_n.resize(std::min(sorted_color_to_n.size(), static_cast<size_t>(5000)));
 
   plot << "\\documentclass[tikz, border=1cm]{standalone}\n";
   plot << "\\usepackage{pgfplots}\n";
@@ -41,50 +41,71 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
   plot << "\\begin{tikzpicture}\n\n";
 
   plot << "\\begin{axis}[\n";
-  plot << "view={" << yaw << "}{" << pitch << "},\n";
-  plot << "height=10cm, width=10cm,\n";
-  plot << "axis lines=center,\n";
-  plot << "axis equal,\n";
-  plot << "scale only axis,\n";
-  plot << "enlargelimits,\n";
-  plot << "xmin=0, xmax=1, ymin=0, ymax=1, zmin=0, zmax=1,\n";
-  plot << "xtick={0}, ytick={0}, ztick={0},\n";
-  plot << "xlabel={$R$}, ylabel={$G$}, zlabel={$B$},\n";
-  plot << "zlabel style={anchor=south}\n";
+  plot << "  view={" << yaw << "}{" << pitch << "},\n";
+  plot << "  height=10cm,\n";
+  plot << "  width=10cm,\n";
+  plot << "  axis lines=center,\n";
+  plot << "  axis equal,\n";
+  plot << "  scale only axis,\n";
+  plot << "  enlargelimits,\n";
+  plot << "  xmin=0, xmax=1,\n";
+  plot << "  ymin=0, ymax=1,\n";
+  plot << "  zmin=0, zmax=1,\n";
+  plot << "  xtick={0},\n";
+  plot << "  ytick={0},\n";
+  plot << "  ztick={0},\n";
+  plot << "  xlabel={$R$},\n";
+  plot << "  ylabel={$G$},\n";
+  plot << "  zlabel={$B$},\n";
+  plot << "  zlabel style={anchor=south}\n";
   plot << "]\n\n";
 
   plot << "\\addplot3[\n";
-  plot << "scatter,\n";
-  plot << "scatter/@pre marker code/.code={\\edef\\temp{\\noexpand\\definecolor{mycolor}{rgb}{\\pgfplotspointmeta}}\\temp\\scope[color=mycolor]},\n";
-  plot << "scatter/@post marker code/.code={\\endscope},\n";
-  plot << "only marks,\n";
-  plot << "mark size=0.01cm,\n";
-  plot << "point meta={TeX code symbolic={\\edef\\pgfplotspointmeta{\\thisrow{R}, \\thisrow{G}, \\thisrow{B}}}}\n";
-  plot << "] table[] {\n";
+  plot << "  scatter,\n";
+  plot << "  scatter/@pre marker code/.code={\n";
+  plot << "    \\edef\\temp{\\noexpand\\definecolor{mycolor}{rgb}{\\pgfplotspointmeta}}\n";
+  plot << "    \\temp\n";
+  plot << "    \\scope[color=mycolor]\n";
+  plot << "  },\n";
+  plot << "  scatter/@post marker code/.code={\n";
+  plot << "    \\endscope\n";
+  plot << "  },\n";
+  plot << "  only marks,\n";
+  plot << "  mark size=0.01cm,\n";
+  plot << "  point meta={TeX code symbolic={\\edef\\pgfplotspointmeta{\\thisrow{R}, \\thisrow{G}, \\thisrow{B}}}}\n";
+  plot << "]\n";
+  plot << "table[] {\n";
   plot << "R G B\n";
 
-  for (const auto& color : sorted_color_to_n | std::views::keys) {
+  std::vector<std::pair<std::array<float, 3>, long long>> shuffled_color_to_n(color_to_n_.begin(), color_to_n_.end());
+  std::ranges::shuffle(shuffled_color_to_n, std::mt19937(std::random_device()()));
+  shuffled_color_to_n.resize(std::min(shuffled_color_to_n.size(), static_cast<size_t>(5000)));
+
+  for (const auto& color : shuffled_color_to_n | std::views::keys) {
     plot << color[0] << ' ' << color[1] << ' ' << color[2] << '\n';
   }
 
-  plot << "};\n";
+  plot << "};\n\n";
   plot << "\\end{axis}\n\n";
 
   plot << "\\begin{axis}[\n";
-  plot << "view={" << yaw << "}{" << pitch << "},\n";
-  plot << "height=10cm, width=10cm,\n";
-  plot << "axis lines=none,\n";
-  plot << "axis equal,\n";
-  plot << "scale only axis,\n";
-  plot << "enlargelimits,\n";
-  plot << "xmin=0, xmax=1, ymin=0, ymax=1, zmin=0, zmax=1\n";
+  plot << "  view={" << yaw << "}{" << pitch << "},\n";
+  plot << "  height=10cm,\n";
+  plot << "  width=10cm,\n";
+  plot << "  axis lines=none,\n";
+  plot << "  axis equal,\n";
+  plot << "  scale only axis,\n";
+  plot << "  enlargelimits,\n";
+  plot << "  xmin=0, xmax=1,\n";
+  plot << "  ymin=0, ymax=1,\n";
+  plot << "  zmin=0, zmax=1\n";
   plot << "]\n\n";
 
-  plot << "\\draw[] (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
-  plot << "\\draw[] (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
-  plot << "\\draw[] (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
-  plot << "\\draw[] (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
-  plot << "\\draw[] (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
+  plot << "\\draw (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
+  plot << "\\draw (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
+  plot << "\\draw (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
+  plot << "\\draw (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
+  plot << "\\draw (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
 
   plot << "\\end{axis}\n";
   plot << "\\end{tikzpicture}\n";
@@ -94,13 +115,14 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
 }
 
 cv::Mat DocColorDecomposer::Plot2dLab() {
-  cv::Mat plot(1275, 1275, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
+  cv::Mat plot = cv::imdecode(cv::Mat(1, plot_2d_lab_data_len, CV_8U, plot_2d_lab_data), cv::IMREAD_UNCHANGED);
+  plot = CvtSRgbToLinRgb(plot);
 
   for (const auto& color : color_to_n_ | std::views::keys) {
-    cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
-    cv::Mat lab_point = ProjOnLab(rgb_point);
-    int y = std::lround(255.0F * (lab_point.at<float>(0, 1) + 2.5F));
-    int x = std::lround(255.0F * (lab_point.at<float>(0, 0) + 2.5F));
+    cv::Mat rgb = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
+    cv::Mat lab = ProjOnLab(rgb);
+    int y = std::lround(255.0F * (lab.at<float>(0, 1) + 2.95F));
+    int x = std::lround(255.0F * (lab.at<float>(0, 0) + 2.95F));
 
     plot.at<cv::Vec3f>(y, x) = cv::Vec3f(color[2], color[1], color[0]);
   }
@@ -126,25 +148,32 @@ std::string DocColorDecomposer::Plot1dPhi() {
   plot << "\\begin{tikzpicture}\n\n";
 
   plot << "\\begin{axis}[\n";
-  plot << "height=10cm, width=30cm,\n";
-  plot << "xmin=0, xmax=360, ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot << "tick style={draw=none},\n";
-  plot << "xlabel={$\\phi$}, ylabel={$n$}\n";
+  plot << "  height=10cm,\n";
+  plot << "  width=30cm,\n";
+  plot << "  xmin=0, xmax=360,\n";
+  plot << "  ymin=0, ymax=" << std::lround(max_n) << ",\n";
+  plot << "  tick style={draw=none},\n";
+  plot << "  xlabel={$\\phi$},\n";
+  plot << "  ylabel={$n$}\n";
   plot << "]\n\n";
 
   for (int phi = 0; phi < 359; ++phi) {
     std::array<float, 3> mean_color = phi_to_mean_color_[phi];
 
     plot << "\\addplot[\n";
-    plot << "ybar interval,\n";
-    plot << "color={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "},\n";
-    plot << "fill={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "}\n";
-    plot << "] table[] {\n";
+    plot << "  ybar interval,\n";
+    plot << "  color={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "},\n";
+    plot << "  fill={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "}\n";
+    plot << "]\n";
+    plot << "table[] {\n";
     plot << "X Y\n";
     plot << phi << ' ' << std::lround(phi_hist_.at<double>(phi)) << '\n';
     plot << phi + 1 << ' ' << std::lround(phi_hist_.at<double>(phi + 1)) << '\n';
     plot << "};\n\n";
   }
+
+  plot << "\\draw (axis cs:0,0) -- (axis cs:360,0);\n";
+  plot << "\\draw (axis cs:0," << std::lround(max_n) << ") -- (axis cs:360," << std::lround(max_n) << ");\n\n";
 
   plot << "\\end{axis}\n";
   plot << "\\end{tikzpicture}\n";
@@ -171,10 +200,13 @@ std::string DocColorDecomposer::Plot1dClusters() {
   plot << "\\begin{tikzpicture}\n\n";
 
   plot << "\\begin{axis}[\n";
-  plot << "height=10cm, width=30cm,\n";
-  plot << "xmin=0, xmax=360, ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot << "tick style={draw=none},\n";
-  plot << "xlabel={$\\phi$}, ylabel={$n$}\n";
+  plot << "  height=10cm,\n";
+  plot << "  width=30cm,\n";
+  plot << "  xmin=0, xmax=360,\n";
+  plot << "  ymin=0, ymax=" << std::lround(max_n) << ",\n";
+  plot << "  tick style={draw=none},\n";
+  plot << "  xlabel={$\\phi$},\n";
+  plot << "  ylabel={$n$}\n";
   plot << "]\n\n";
 
   for (int phi = 0; phi < 359; ++phi) {
@@ -182,15 +214,24 @@ std::string DocColorDecomposer::Plot1dClusters() {
     std::array<float, 3> mean_color = cluster_to_mean_color_[cluster];
 
     plot << "\\addplot[\n";
-    plot << "ybar interval,\n";
-    plot << "color={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "},\n";
-    plot << "fill={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "}\n";
-    plot << "] table[] {\n";
+    plot << "  ybar interval,\n";
+    plot << "  color={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "},\n";
+    plot << "  fill={rgb,1: red," << mean_color[0] << "; green," << mean_color[1] << "; blue," << mean_color[2] << "}\n";
+    plot << "]\n";
+    plot << "table[] {\n";
     plot << "X Y\n";
     plot << phi << ' ' << std::lround(smoothed_phi_hist_.at<int>(phi)) << '\n';
     plot << phi + 1 << ' ' << std::lround(smoothed_phi_hist_.at<int>(phi + 1)) << '\n';
     plot << "};\n\n";
   }
+
+  for (const auto& cluster : phi_clusters_) {
+    plot << "\\draw (axis cs:" << cluster << ",0) -- (axis cs:" << cluster << ',' << std::lround(max_n) << ");\n";
+  }
+
+  plot << "\n";
+  plot << "\\draw (axis cs:0,0) -- (axis cs:360,0);\n";
+  plot << "\\draw (axis cs:0," << std::lround(max_n) << ") -- (axis cs:360," << std::lround(max_n) << ");\n\n";
 
   plot << "\\end{axis}\n";
   plot << "\\end{tikzpicture}\n";
@@ -204,15 +245,18 @@ void DocColorDecomposer::ComputePhiHist() {
 
   for (const auto& [color, n] : color_to_n_) {
     if (color[0] != color[1] || color[1] != color[2] || color[0] != color[2]) {
-      cv::Mat rgb_point = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
-      cv::Mat lab_point = ProjOnLab(rgb_point);
-      float phi_rad = std::atan2(-lab_point.at<float>(0, 1), lab_point.at<float>(0, 0));
+      cv::Mat rgb = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
+      cv::Mat lab = ProjOnLab(rgb);
+      float phi_rad = std::atan2(-lab.at<float>(0, 1), lab.at<float>(0, 0));
       int phi = std::lround((phi_rad * 180.0F / CV_PI) + 360.0F) % 360;
 
       phi_hist_.at<double>(phi) += static_cast<double>(n);
+
+      color_to_lab_[color] = lab;
       color_to_phi_[color] = phi;
 
     } else {
+      color_to_lab_[color] = (cv::Mat_<float>(1, 3) << 0.0F, 0.0F, 0.0F);
       color_to_phi_[color] = -1;
     }
   }
@@ -244,7 +288,7 @@ void DocColorDecomposer::ComputePhiClusters() {
 void DocColorDecomposer::ComputeLayers() {
   layers_ = std::vector<cv::Mat>(phi_clusters_.size() + 1);
   for (auto& layer : layers_) {
-    layer = cv::Mat(src_.rows, src_.cols, CV_32FC3, cv::Vec3f(1.0F, 1.0F, 1.0F));
+    layer = cv::Mat(processed_src_.rows, processed_src_.cols, CV_32FC3, cv::Vec3f(1.0F, 1.0F, 1.0F));
   }
 
   phi_to_n_ = std::vector<long long>(360);
@@ -252,14 +296,14 @@ void DocColorDecomposer::ComputeLayers() {
   phi_to_mean_color_ = std::vector<std::array<float, 3>>(360);
   cluster_to_mean_color_ = std::vector<std::array<float, 3>>(phi_clusters_.size() + 1);
 
-  for (int y = 0; y < src_.rows; ++y) {
-    for (int x = 0; x < src_.cols; ++x) {
-      auto& pixel = src_.at<cv::Vec3f>(y, x);
+  for (int y = 0; y < processed_src_.rows; ++y) {
+    for (int x = 0; x < processed_src_.cols; ++x) {
+      auto& pixel = processed_src_.at<cv::Vec3f>(y, x);
       std::array<float, 3> color = {pixel[2], pixel[1], pixel[0]};
       int phi = color_to_phi_[color];
       int cluster = (phi != -1) ? phi_to_cluster_[phi] : 0;
 
-      layers_[cluster].at<cv::Vec3f>(y, x) = pixel;
+      layers_[cluster].at<cv::Vec3f>(y, x) = src_.at<cv::Vec3f>(y, x);
 
       if (phi != -1) {
         auto n = static_cast<float>(phi_to_n_[phi]);
@@ -286,21 +330,6 @@ void DocColorDecomposer::ComputeLayers() {
   }
 
   std::ranges::for_each(layers_, [](auto& layer) { layer = CvtLinRgbToSRgb(layer); });
-}
-
-cv::Mat DocColorDecomposer::SmoothHue(cv::Mat src, int ker_size) {
-  cv::Mat smoothed_src;
-  cv::GaussianBlur(src, smoothed_src, cv::Size(ker_size, ker_size), ker_size);
-
-  cv::cvtColor(src, src, cv::COLOR_BGR2HLS_FULL);
-  cv::cvtColor(smoothed_src, smoothed_src, cv::COLOR_BGR2HLS_FULL);
-
-  const int kFromTo[] = {0, 0};
-  cv::mixChannels(&smoothed_src, 1, &src, 1, kFromTo, 1);
-
-  cv::cvtColor(src, src, cv::COLOR_HLS2BGR_FULL);
-
-  return src;
 }
 
 cv::Mat DocColorDecomposer::ThreshSaturation(cv::Mat src, double thresh) {
@@ -372,7 +401,7 @@ std::map<std::array<float, 3>, long long> DocColorDecomposer::LutColorToN(const 
   return color_to_n;
 }
 
-cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb_point) {
+cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb) {
   const cv::Mat kWhite = (cv::Mat_<float>(1, 3) << 1.0F, 1.0F, 1.0F);
   const cv::Mat kNorm = (cv::Mat_<float>(1, 3) << 1.0F / std::sqrt(3.0F), 1.0F / std::sqrt(3.0F), 1.0F / std::sqrt(3.0F));
   const cv::Mat kRgbToLab = (cv::Mat_<float>(3, 3) <<
@@ -382,8 +411,8 @@ cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb_point) {
   );
 
   cv::Mat proj_in_lab;
-  if (rgb_point.at<float>(0) != 1.0F || rgb_point.at<float>(1) != 1.0F || rgb_point.at<float>(2) != 1.0F) {
-    cv::Mat proj_in_rgb = kWhite - (kNorm.dot(kWhite) / kNorm.dot(rgb_point - kWhite)) * (rgb_point - kWhite);
+  if (rgb.at<float>(0) != 1.0F || rgb.at<float>(1) != 1.0F || rgb.at<float>(2) != 1.0F) {
+    cv::Mat proj_in_rgb = kWhite - (kNorm.dot(kWhite) / kNorm.dot(rgb - kWhite)) * (rgb - kWhite);
     proj_in_lab = proj_in_rgb * kRgbToLab.t();
   } else {
     proj_in_lab = (cv::Mat_<float>(1, 3) << 0.0F, 0.0F, 0.0F);
@@ -416,8 +445,8 @@ std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_
 
     prev_delta = curr_delta;
   }
-
   std::ranges::sort(extremes);
+
   if (hist.at<int>(extremes[0]) > hist.at<int>(extremes[1])) {
     std::ranges::rotate(extremes, extremes.begin() + 1);
   }
@@ -430,6 +459,7 @@ std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_
       peaks.push_back(extremes[i]);
     }
   }
+  std::ranges::sort(peaks);
 
   return peaks;
 }
