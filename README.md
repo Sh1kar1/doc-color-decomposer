@@ -22,14 +22,10 @@
 Implementation of the following research article:
 [documents-decomposition-by-color-clustering.pdf](./assets/documents-decomposition-by-color-clustering.pdf)
 
-### Algorithm
-
-1. Preprocessing by aberration reduction
-2. Conversion to the linRGB color model
-3. Colors projection onto the $\alpha\beta$ plane
-4. Histogram calculation with respect to the rotation angle $\phi$
-5. Clustering by peak detection in the histogram
-6. Decomposition into layers via clusters
+1. Colors projection onto the $\alpha\beta$ plane
+2. Histogram calculation with respect to the angle $\phi$ in polar coordinates
+3. Clustering by peak detection in the histogram
+4. Decomposition into layers via clusters
 
 ### Demonstration
 
@@ -86,12 +82,12 @@ Implementation of the following research article:
 ### App
 
 ```
-./doc_color_decomposer_app <path-to-image> <path-to-output-directory> [options]
+./doc-color-decomposer-app <path-to-image> <path-to-output-directory> [options]
 ```
 
 |               Option               | Usage                                        |
 |:----------------------------------:|----------------------------------------------|
-| `--tolerance=<odd-positive-value>` | set tolerance of decomposition (default: 25) |
+| `--tolerance=<odd-positive-value>` | set tolerance of decomposition (default: 35) |
 |          `--nopreprocess`          | disable image preprocessing                  |
 |           `--visualize`            | save visualizations                          |
 
@@ -106,7 +102,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 25, bool preprocessing = true)
+  explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 35, bool preprocessing = true)
   ```
 
   Constructs an instance from the given document and precomputes its layers
@@ -140,7 +136,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  [[nodiscard]] std::string DocColorDecomposer::Plot3dRgb(int yaw = 115, int pitch = 15)
+  [[nodiscard]] std::string DocColorDecomposer::Plot3dRgb(double yaw = 135.0, double pitch = 35.25)
   ```
 
   Generates a 3D scatter plot of the document colors in the linRGB space
@@ -168,7 +164,7 @@ Implementation of the following research article:
   [[nodiscard]] std::string DocColorDecomposer::Plot1dPhi()
   ```
 
-  Generates a 1D histogram plot with respect to the rotation angle $\phi$
+  Generates a 1D histogram plot with respect to the angle $\phi$ in polar coordinates
 
   Returns the LaTeX code of the plot that can be saved in the .tex format and compiled
 
@@ -178,7 +174,7 @@ Implementation of the following research article:
   [[nodiscard]] std::string DocColorDecomposer::Plot1dClusters()
   ```
 
-  Generates a smoothed and separated by clusters 1D histogram plot with respect to the rotation angle $\phi$
+  Generates a smoothed and separated by clusters 1D histogram plot
 
   Returns the LaTeX code of the plot that can be saved in the .tex format and compiled
 
@@ -188,13 +184,13 @@ Implementation of the following research article:
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 
 #include <fstream>
 #include <ranges>
 
 int main() {
-  cv::Mat src = cv::imread("/path/to/image/", cv::IMREAD_COLOR);
+  cv::Mat src = cv::imread("/PATH/TO/IMAGE/", cv::IMREAD_COLOR);
   DocColorDecomposer dcd = DocColorDecomposer(src);
 
   for (const auto& [i, layer] : dcd.GetLayers() | std::views::enumerate) {
