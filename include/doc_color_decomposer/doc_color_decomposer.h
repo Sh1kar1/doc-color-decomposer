@@ -21,7 +21,7 @@
 /**
  * @brief Interface of the [Doc Color Decomposer](https://github.com/Sh1kar1/doc-color-decomposer) library for documents decomposition by color clustering
  */
-class [[nodiscard]] DocColorDecomposer {
+class [[nodiscard]] DocColorDecomposer final {
 public:
   /**
    * @brief Constructs an empty instance
@@ -42,14 +42,14 @@ public:
    *
    * @return list of the decomposed document layers in the sRGB format with a white background
    */
-  [[nodiscard]] std::vector<cv::Mat> GetLayers() const;
+  [[nodiscard]] std::vector<cv::Mat> GetLayers() const & noexcept;
 
   /**
    * @brief Merges the precomputed layers for testing
    *
    * @return image of the merged layers in the sRGB format that must be the same as the source document
    */
-  [[nodiscard]] cv::Mat MergeLayers();
+  [[nodiscard]] cv::Mat MergeLayers() &;
 
   /**
    * @brief Generates a 3D scatter plot of the document colors in the linRGB space
@@ -59,28 +59,28 @@ public:
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot3dRgb(double yaw = 135.0, double pitch = 35.25);
+  [[nodiscard]] std::string Plot3dRgb(double yaw = 135.0, double pitch = 35.25) &;
 
   /**
    * @brief Generates a 2D scatter plot of the document colors projections on the \f$\alpha\beta\f$ plane
    *
    * @return image of the plot in the sRGB format
    */
-  [[nodiscard]] cv::Mat Plot2dLab();
+  [[nodiscard]] cv::Mat Plot2dLab() &;
 
   /**
    * @brief Generates a 1D histogram plot with respect to the angle \f$\phi\f$ in polar coordinates
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot1dPhi();
+  [[nodiscard]] std::string Plot1dPhi() &;
 
   /**
    * @brief Generates a smoothed and separated by clusters 1D histogram plot
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot1dClusters();
+  [[nodiscard]] std::string Plot1dClusters() &;
 
 private:
   void ComputePhiHist();

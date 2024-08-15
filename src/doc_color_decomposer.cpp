@@ -14,11 +14,11 @@ DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool p
   ComputeLayers();
 }
 
-std::vector<cv::Mat> DocColorDecomposer::GetLayers() const {
+std::vector<cv::Mat> DocColorDecomposer::GetLayers() const & noexcept {
   return layers_;
 }
 
-cv::Mat DocColorDecomposer::MergeLayers() {
+cv::Mat DocColorDecomposer::MergeLayers() & {
   cv::Mat merged_layers(processed_src_.rows, processed_src_.cols, CV_8UC3, cv::Vec3b(255, 255, 255));
 
   std::ranges::for_each(layers_, [&merged_layers](auto& layer) { layer.copyTo(merged_layers, (layer != cv::Vec3b(255, 255, 255))); });
@@ -26,7 +26,7 @@ cv::Mat DocColorDecomposer::MergeLayers() {
   return merged_layers;
 }
 
-std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
+std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
@@ -114,8 +114,8 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) {
   return plot.str();
 }
 
-cv::Mat DocColorDecomposer::Plot2dLab() {
-  cv::Mat plot = cv::imdecode(cv::Mat(1, plot_2d_lab_data_len, CV_8U, plot_2d_lab_data), cv::IMREAD_UNCHANGED);
+cv::Mat DocColorDecomposer::Plot2dLab() & {
+  cv::Mat plot = cv::imdecode(cv::Mat(1, doc_color_decomposer::plot_2d_lab_len, CV_8U, doc_color_decomposer::plot_2d_lab_data), cv::IMREAD_UNCHANGED);
   plot = CvtSRgbToLinRgb(plot);
 
   for (const auto& color : color_to_n_ | std::views::keys) {
@@ -130,7 +130,7 @@ cv::Mat DocColorDecomposer::Plot2dLab() {
   return CvtLinRgbToSRgb(plot);
 }
 
-std::string DocColorDecomposer::Plot1dPhi() {
+std::string DocColorDecomposer::Plot1dPhi() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
@@ -182,7 +182,7 @@ std::string DocColorDecomposer::Plot1dPhi() {
   return plot.str();
 }
 
-std::string DocColorDecomposer::Plot1dClusters() {
+std::string DocColorDecomposer::Plot1dClusters() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
