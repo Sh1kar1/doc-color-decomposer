@@ -14,8 +14,7 @@
 
 - API
 - CLI app
-- Optional visualizations
-- Test data
+- Generating visualizations
 
 ### Description
 
@@ -89,17 +88,10 @@ Implementation of the following research article:
 |:----------------------------------:|----------------------------------------------|
 | `--tolerance=<odd-positive-value>` | set tolerance of decomposition (default: 35) |
 |          `--nopreprocess`          | disable image preprocessing                  |
+|            `--masking`             | save binary masks instead of layers          |
 |           `--visualize`            | save visualizations                          |
 
 ### Interface
-
-- ```c++
-  explicit DocColorDecomposer() = default
-  ```
-
-  Constructs an empty instance
-
-<br>
 
 - ```c++
   explicit DocColorDecomposer(const cv::Mat& src, int tolerance = 35, bool preprocessing = true)
@@ -116,7 +108,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  [[nodiscard]] std::vector<cv::Mat> DocColorDecomposer::GetLayers() const
+  [[nodiscard]] std::vector<cv::Mat> DocColorDecomposer::GetLayers() const & noexcept
   ```
 
   Retrieves the precomputed layers
@@ -126,17 +118,17 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  [[nodiscard]] cv::Mat DocColorDecomposer::MergeLayers()
+  [[nodiscard]] std::vector<cv::Mat> DocColorDecomposer::GetMasks() const & noexcept
   ```
 
-  Merges the precomputed layers for testing
+  Retrieves the precomputed masks of the layers
 
-  Returns the image of the merged layers in the sRGB format that must be the same as the source document
+  Returns the list of the binary masks of the layers in the sRGB format with a black background
 
 <br>
 
 - ```c++
-  [[nodiscard]] std::string DocColorDecomposer::Plot3dRgb(double yaw = 135.0, double pitch = 35.25)
+  [[nodiscard]] std::string DocColorDecomposer::Plot3dRgb(double yaw = 135.0, double pitch = 35.25) &
   ```
 
   Generates a 3D scatter plot of the document colors in the linRGB space
@@ -151,7 +143,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  [[nodiscard]] cv::Mat DocColorDecomposer::Plot2dLab()
+  [[nodiscard]] cv::Mat DocColorDecomposer::Plot2dLab() &
   ```
 
   Generates a 2D scatter plot of the document colors projections on the $\alpha\beta$ plane
@@ -161,7 +153,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  [[nodiscard]] std::string DocColorDecomposer::Plot1dPhi()
+  [[nodiscard]] std::string DocColorDecomposer::Plot1dPhi() &
   ```
 
   Generates a 1D histogram plot with respect to the angle $\phi$ in polar coordinates
@@ -171,7 +163,7 @@ Implementation of the following research article:
 <br>
 
 - ```c++
-  [[nodiscard]] std::string DocColorDecomposer::Plot1dClusters()
+  [[nodiscard]] std::string DocColorDecomposer::Plot1dClusters() &
   ```
 
   Generates a smoothed and separated by clusters 1D histogram plot
@@ -197,7 +189,10 @@ int main() {
     cv::imwrite("layer-" + std::to_string(i + 1) + ".png", layer);
   }
 
-  cv::imwrite("merged-layers.png", dcd.MergeLayers());
+  for (const auto& [i, mask] : dcd.GetMasks() | std::views::enumerate) {
+    cv::imwrite("mask-" + std::to_string(i + 1) + ".png", mask);
+  }
+
   cv::imwrite("plot-2d-lab.png", dcd.Plot2dLab());
 
   std::ofstream("plot-3d-rgb.tex") << dcd.Plot3dRgb();
