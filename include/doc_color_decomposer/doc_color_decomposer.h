@@ -102,13 +102,8 @@ private:
   cv::Mat smoothed_phi_hist_;
   std::vector<int> phi_clusters_;
   std::map<std::array<float, 3>, long long> color_to_n_;
-  std::map<std::array<float, 3>, cv::Mat> color_to_lab_;
-  std::vector<long long> phi_to_n_;
-  std::vector<long long> cluster_to_n_;
   std::map<std::array<float, 3>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
-  std::vector<std::array<float, 3>> phi_to_mean_color_;
-  std::vector<std::array<float, 3>> cluster_to_mean_color_;
   std::vector<cv::Mat> layers_;
 };
 
