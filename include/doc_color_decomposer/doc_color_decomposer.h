@@ -45,11 +45,11 @@ public:
   [[nodiscard]] std::vector<cv::Mat> GetLayers() const & noexcept;
 
   /**
-   * @brief Merges the precomputed layers for testing
+   * @brief Retrieves the precomputed masks of the layers
    *
-   * @return image of the merged layers in the sRGB format that must be the same as the source document
+   * @return list of the binary masks of the layers in the sRGB format with a black background
    */
-  [[nodiscard]] cv::Mat MergeLayers() &;
+  [[nodiscard]] std::vector<cv::Mat> GetMasks() const & noexcept;
 
   /**
    * @brief Generates a 3D scatter plot of the document colors in the linRGB space
@@ -104,6 +104,7 @@ private:
   std::map<std::array<float, 3>, long long> color_to_n_;
   std::map<std::array<float, 3>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
+  std::vector<cv::Mat> masks_;
   std::vector<cv::Mat> layers_;
 };
 

@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
 
     int tolerance = 35;
     bool nopreprocess = false;
+    bool masking = false;
     bool visualize = false;
 
     for (const auto& arg : args | std::views::drop(2)) {
@@ -33,6 +34,8 @@ int main(int argc, char** argv) {
 
       } else if (arg == "--nopreprocess") {
         nopreprocess = true;
+      } else if (arg == "--masking") {
+        masking = true;
       } else if (arg == "--visualize") {
         visualize = true;
 
@@ -66,12 +69,11 @@ int main(int argc, char** argv) {
       return EXIT_FAILURE;
     }
 
-    for (const auto& [i, layer] : dcd.GetLayers() | std::views::enumerate) {
+    for (const auto& [i, layer] : (masking ? dcd.GetMasks() : dcd.GetLayers()) | std::views::enumerate) {
       cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(i + 1) + ".png", layer);
     }
 
     if (visualize) {
-      cv::imwrite((dst_path / (src_path.stem().string() + "-merged-layers.png")).string(), dcd.MergeLayers());
       cv::imwrite((dst_path / (src_path.stem().string() + "-plot-2d-lab.png")).string(), dcd.Plot2dLab());
 
       std::ofstream(dst_path / (src_path.stem().string() + "-plot-3d-rgb.tex")) << dcd.Plot3dRgb();
@@ -81,7 +83,7 @@ int main(int argc, char** argv) {
 
     std::cout << "Success: files saved";
 
-  } else if (args.empty() || args.size() == 1 && (args[0] == "--help" || args[0] == "-h")) {
+  } else if (args.empty() || args.size() == 1 && args[0] == "--help") {
     std::cout << "DESCRIPTION\n";
     std::cout << "  App of the `Doc Color Decomposer` library for documents decomposition by color clustering\n";
     std::cout << "  More info: https://github.com/Sh1kar1/doc-color-decomposer\n\n";
@@ -92,6 +94,7 @@ int main(int argc, char** argv) {
     std::cout << "OPTIONS\n";
     std::cout << "  --tolerance=<odd-positive-value>  Set tolerance of decomposition (default: 35)\n";
     std::cout << "  --nopreprocess                    Disable image preprocessing\n";
+    std::cout << "  --masking                         Save binary masks instead of layers\n";
     std::cout << "  --visualize                       Save visualizations";
 
   } else {

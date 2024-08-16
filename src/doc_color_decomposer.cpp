@@ -18,12 +18,8 @@ std::vector<cv::Mat> DocColorDecomposer::GetLayers() const & noexcept {
   return layers_;
 }
 
-cv::Mat DocColorDecomposer::MergeLayers() & {
-  cv::Mat merged_layers(processed_src_.rows, processed_src_.cols, CV_8UC3, cv::Vec3b(255, 255, 255));
-
-  std::ranges::for_each(layers_, [&merged_layers](auto& layer) { layer.copyTo(merged_layers, (layer != cv::Vec3b(255, 255, 255))); });
-
-  return merged_layers;
+std::vector<cv::Mat> DocColorDecomposer::GetMasks() const & noexcept {
+  return masks_;
 }
 
 std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
@@ -332,6 +328,11 @@ void DocColorDecomposer::ComputeLayers() {
     layer = cv::Mat(processed_src_.rows, processed_src_.cols, CV_32FC3, cv::Vec3f(1.0F, 1.0F, 1.0F));
   }
 
+  masks_ = std::vector<cv::Mat>(phi_clusters_.size() + 1);
+  for (auto& mask : masks_) {
+    mask = cv::Mat(processed_src_.rows, processed_src_.cols, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
+  }
+
   for (int y = 0; y < processed_src_.rows; ++y) {
     for (int x = 0; x < processed_src_.cols; ++x) {
       auto& pixel = processed_src_.at<cv::Vec3f>(y, x);
@@ -341,10 +342,12 @@ void DocColorDecomposer::ComputeLayers() {
       int cluster = (phi != -1) ? phi_to_cluster_[phi] : 0;
 
       layers_[cluster].at<cv::Vec3f>(y, x) = src_.at<cv::Vec3f>(y, x);
+      masks_[cluster].at<cv::Vec3f>(y, x) = cv::Vec3f(1.0F, 1.0F, 1.0F);
     }
   }
 
   std::ranges::for_each(layers_, [](auto& layer) { layer = CvtLinRgbToSRgb(layer); });
+  std::ranges::for_each(masks_, [](auto& mask) { mask = CvtLinRgbToSRgb(mask); });
 }
 
 cv::Mat DocColorDecomposer::ThreshSaturation(cv::Mat src, double thresh) {
