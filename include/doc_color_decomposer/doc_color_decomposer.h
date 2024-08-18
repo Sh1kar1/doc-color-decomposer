@@ -2,21 +2,11 @@
 #define DOC_COLOR_DECOMPOSER_H
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
-
-#include <random>
-
-#include <ranges>
 
 #include <array>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 
 /**
  * @brief Interface of the [Doc Color Decomposer](https://github.com/Sh1kar1/doc-color-decomposer) library for documents decomposition by color clustering

@@ -2,6 +2,14 @@
 
 #include "../src/plot_2d_lab_image.h"
 
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <iomanip>
+#include <random>
+#include <ranges>
+#include <sstream>
+
 DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool preprocessing) {
   src_ = CvtSRgbToLinRgb(src);
   processed_src_ = preprocessing ? CvtSRgbToLinRgb(ThreshLightness(ThreshSaturation(src))) : src_;

@@ -1,20 +1,13 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <opencv2/core/utils/logger.hpp>
-
-#include <regex>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 
 #include <filesystem>
-
-#include <ranges>
-
-#include <string>
-#include <vector>
-
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <ranges>
+#include <regex>
 
 int main(int argc, char** argv) {
   std::vector<std::string> args(argv + 1, argv + argc);
