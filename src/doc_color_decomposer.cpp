@@ -52,20 +52,14 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
   plot << "  view={" << yaw << "}{" << pitch << "},\n";
   plot << "  height=10cm,\n";
   plot << "  width=10cm,\n";
-  plot << "  axis lines=center,\n";
-  plot << "  axis equal,\n";
   plot << "  scale only axis,\n";
-  plot << "  enlargelimits,\n";
   plot << "  xmin=0, xmax=1,\n";
   plot << "  ymin=0, ymax=1,\n";
   plot << "  zmin=0, zmax=1,\n";
-  plot << "  xtick={0},\n";
-  plot << "  ytick={0},\n";
-  plot << "  ztick={0},\n";
+  plot << "  tick style={white},\n";
   plot << "  xlabel={$R$},\n";
   plot << "  ylabel={$G$},\n";
-  plot << "  zlabel={$B$},\n";
-  plot << "  zlabel style={anchor=south}\n";
+  plot << "  zlabel={$B$}\n";
   plot << "]\n\n";
 
   plot << "\\addplot3[\n";
@@ -90,27 +84,6 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
   }
 
   plot << "};\n\n";
-  plot << "\\end{axis}\n\n";
-
-  plot << "\\begin{axis}[\n";
-  plot << "  view={" << yaw << "}{" << pitch << "},\n";
-  plot << "  height=10cm,\n";
-  plot << "  width=10cm,\n";
-  plot << "  axis lines=none,\n";
-  plot << "  axis equal,\n";
-  plot << "  scale only axis,\n";
-  plot << "  enlargelimits,\n";
-  plot << "  xmin=0, xmax=1,\n";
-  plot << "  ymin=0, ymax=1,\n";
-  plot << "  zmin=0, zmax=1\n";
-  plot << "]\n\n";
-
-  plot << "\\draw (axis cs:1,0,0) -- (axis cs:1,1,0) -- (axis cs:0,1,0);\n";
-  plot << "\\draw (axis cs:1,1,1) -- (axis cs:0,1,1) -- (axis cs:0,0,1) -- (axis cs:1,0,1) -- (axis cs:1,1,1);\n";
-  plot << "\\draw (axis cs:1,0,0) -- (axis cs:1,0,1);\n";
-  plot << "\\draw (axis cs:1,1,0) -- (axis cs:1,1,1);\n";
-  plot << "\\draw (axis cs:0,1,0) -- (axis cs:0,1,1);\n\n";
-
   plot << "\\end{axis}\n";
   plot << "\\end{tikzpicture}\n";
   plot << "\\end{document}\n";
@@ -177,7 +150,8 @@ std::string DocColorDecomposer::Plot1dPhi() & {
   plot << "  width=30cm,\n";
   plot << "  xmin=0, xmax=360,\n";
   plot << "  ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot << "  tick style={draw=none},\n";
+  plot << "  tick style={white},\n";
+  plot << "  xtick style={draw=none},\n";
   plot << "  xlabel={$\\phi$},\n";
   plot << "  ylabel={$n$}\n";
   plot << "]\n\n";
@@ -250,7 +224,8 @@ std::string DocColorDecomposer::Plot1dClusters() & {
   plot << "  width=30cm,\n";
   plot << "  xmin=0, xmax=360,\n";
   plot << "  ymin=0, ymax=" << std::lround(max_n) << ",\n";
-  plot << "  tick style={draw=none},\n";
+  plot << "  tick style={white},\n";
+  plot << "  xtick style={draw=none},\n";
   plot << "  xlabel={$\\phi$},\n";
   plot << "  ylabel={$n$}\n";
   plot << "]\n\n";
