@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.20)
 
 project(doc-color-decomposer LANGUAGES CXX)
 
@@ -9,8 +9,8 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
 find_package(OpenCV REQUIRED)
 
-install(DIRECTORY include DESTINATION .)
-install(DIRECTORY data DESTINATION .)
+install(FILES README.md LICENSE DESTINATION .)
+install(DIRECTORY include data assets DESTINATION .)
 
 add_subdirectory(src)
 add_subdirectory(app)
