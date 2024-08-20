@@ -30,16 +30,25 @@ public:
   /**
    * @brief Retrieves the precomputed layers
    *
-   * @return list of the decomposed document layers in the sRGB format with a white background
+   * @return list of the decomposed document layers with a white background in the sRGB format
    */
   [[nodiscard]] std::vector<cv::Mat> GetLayers() const & noexcept;
 
   /**
    * @brief Retrieves the precomputed masks of the layers
    *
-   * @return list of the binary masks of the layers in the sRGB format with a black background
+   * @return list of the binary masks of the layers in the grayscale format
    */
   [[nodiscard]] std::vector<cv::Mat> GetMasks() const & noexcept;
+
+  /**
+   * @brief Computes a Panoptic Quality (PQ) of the document decomposition (segmentation)
+   *
+   * @param[in] truth_masks list of the ground-truth binary masks in the grayscale format
+   *
+   * @return value between 0 and 1 that represents a quality
+   */
+  [[nodiscard]] double ComputeQuality(const std::vector<cv::Mat>& truth_masks) const &;
 
   /**
    * @brief Generates a 3D scatter plot of the document colors in the linRGB space
@@ -74,23 +83,25 @@ public:
 
 private:
   void ComputePhiHist();
-  void ComputePhiClusters();
+  void ComputeClusters();
   void ComputeLayers();
 
-  [[nodiscard]] static cv::Mat ThreshSaturation(cv::Mat src, double thresh = 10.0);
-  [[nodiscard]] static cv::Mat ThreshLightness(cv::Mat src, double thresh = 50.0);
+  [[nodiscard]] static cv::Mat ThreshS(cv::Mat src, double thresh = 10.0);
+  [[nodiscard]] static cv::Mat ThreshL(cv::Mat src, double thresh = 50.0);
   [[nodiscard]] static cv::Mat CvtSRgbToLinRgb(cv::Mat src);
   [[nodiscard]] static cv::Mat CvtLinRgbToSRgb(cv::Mat src);
-  [[nodiscard]] static std::map<std::array<float, 3>, long long> LutColorToN(const cv::Mat& src);
+  [[nodiscard]] static std::map<std::array<float, 3>, long long> ComputeColorToN(const cv::Mat& src);
   [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb);
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
+  [[nodiscard]] static double ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask);
+  [[nodiscard]] static double ComputePq(const std::vector<cv::Mat>& predicted_masks, const std::vector<cv::Mat>& truth_masks);
 
   cv::Mat src_;
   cv::Mat processed_src_;
   int tolerance_;
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
-  std::vector<int> phi_clusters_;
+  std::vector<int> clusters_;
   std::map<std::array<float, 3>, long long> color_to_n_;
   std::map<std::array<float, 3>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;

@@ -12,13 +12,13 @@
 
 DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool preprocessing) {
   src_ = CvtSRgbToLinRgb(src);
-  processed_src_ = preprocessing ? CvtSRgbToLinRgb(ThreshLightness(ThreshSaturation(src))) : src_;
+  processed_src_ = preprocessing ? CvtSRgbToLinRgb(ThreshL(ThreshS(src))) : src_;
   tolerance_ = tolerance;
 
-  color_to_n_ = LutColorToN(processed_src_);
+  color_to_n_ = ComputeColorToN(processed_src_);
 
   ComputePhiHist();
-  ComputePhiClusters();
+  ComputeClusters();
   ComputeLayers();
 }
 
@@ -28,6 +28,10 @@ std::vector<cv::Mat> DocColorDecomposer::GetLayers() const & noexcept {
 
 std::vector<cv::Mat> DocColorDecomposer::GetMasks() const & noexcept {
   return masks_;
+}
+
+double DocColorDecomposer::ComputeQuality(const std::vector<cv::Mat>& truth_masks) const & {
+  return ComputePq(masks_, truth_masks);
 }
 
 std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
@@ -246,7 +250,7 @@ std::string DocColorDecomposer::Plot1dClusters() & {
     plot << "};\n\n";
   }
 
-  for (const auto& cluster : phi_clusters_) {
+  for (const auto& cluster : clusters_) {
     plot << "\\draw (axis cs:" << cluster << ",0) -- (axis cs:" << cluster << ',' << std::lround(max_n) << ");\n";
   }
 
@@ -265,7 +269,8 @@ void DocColorDecomposer::ComputePhiHist() {
   phi_hist_ = cv::Mat::zeros(1, 360, CV_64F);
 
   for (const auto& [color, n] : color_to_n_) {
-    if (color[0] != color[1] || color[1] != color[2] || color[0] != color[2]) {
+    bool is_gray = (color[0] == color[1]) && (color[1] == color[2]) && (color[0] == color[2]);
+    if (!is_gray) {
       cv::Mat rgb = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
       cv::Mat lab = ProjOnLab(rgb);
 
@@ -284,7 +289,7 @@ void DocColorDecomposer::ComputePhiHist() {
   smoothed_phi_hist_.convertTo(smoothed_phi_hist_, CV_32S);
 }
 
-void DocColorDecomposer::ComputePhiClusters() {
+void DocColorDecomposer::ComputeClusters() {
   phi_to_cluster_ = std::vector<int>(360, 1);
 
   double max_h;
@@ -293,25 +298,26 @@ void DocColorDecomposer::ComputePhiClusters() {
   std::vector<int> peaks = FindHistPeaks(smoothed_phi_hist_, std::lround(0.01 * max_h));
   peaks.push_back(peaks[0] + 360);
 
-  for (int i = 0; i < peaks.size() - 1; ++i) {
-    phi_clusters_.push_back(((peaks[i + 1] + peaks[i]) / 2) % 360);
+  for (size_t i = 0; i < peaks.size() - 1; ++i) {
+    int mid = ((peaks[i + 1] + peaks[i]) / 2) % 360;
+    clusters_.push_back(mid);
   }
-  std::ranges::sort(phi_clusters_);
+  std::ranges::sort(clusters_);
 
-  for (int i = 0; i < phi_clusters_.size() - 1; ++i) {
-    for (int j = phi_clusters_[i]; j < phi_clusters_[i + 1]; ++j) {
+  for (int i = 0; i < clusters_.size() - 1; ++i) {
+    for (size_t j = clusters_[i]; j < clusters_[i + 1]; ++j) {
       phi_to_cluster_[j] = i + 2;
     }
   }
 }
 
 void DocColorDecomposer::ComputeLayers() {
-  layers_ = std::vector<cv::Mat>(phi_clusters_.size() + 1);
+  layers_ = std::vector<cv::Mat>(clusters_.size() + 1);
   for (auto& layer : layers_) {
     layer = cv::Mat(processed_src_.rows, processed_src_.cols, CV_32FC3, cv::Vec3f(1.0F, 1.0F, 1.0F));
   }
 
-  masks_ = std::vector<cv::Mat>(phi_clusters_.size() + 1);
+  masks_ = std::vector<cv::Mat>(clusters_.size() + 1);
   for (auto& mask : masks_) {
     mask = cv::Mat(processed_src_.rows, processed_src_.cols, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
   }
@@ -330,10 +336,10 @@ void DocColorDecomposer::ComputeLayers() {
   }
 
   std::ranges::for_each(layers_, [](auto& layer) { layer = CvtLinRgbToSRgb(layer); });
-  std::ranges::for_each(masks_, [](auto& mask) { mask = CvtLinRgbToSRgb(mask); });
+  std::ranges::for_each(masks_, [](auto& mask) { mask = CvtLinRgbToSRgb(mask); cv::cvtColor(mask, mask, cv::COLOR_BGR2GRAY); });
 }
 
-cv::Mat DocColorDecomposer::ThreshSaturation(cv::Mat src, double thresh) {
+cv::Mat DocColorDecomposer::ThreshS(cv::Mat src, double thresh) {
   cv::cvtColor(src, src, cv::COLOR_BGR2HSV_FULL);
 
   std::vector<cv::Mat> hsv_channels;
@@ -348,7 +354,7 @@ cv::Mat DocColorDecomposer::ThreshSaturation(cv::Mat src, double thresh) {
   return src;
 }
 
-cv::Mat DocColorDecomposer::ThreshLightness(cv::Mat src, double thresh) {
+cv::Mat DocColorDecomposer::ThreshL(cv::Mat src, double thresh) {
   cv::cvtColor(src, src, cv::COLOR_BGR2HLS_FULL);
 
   std::vector<cv::Mat> hls_channels;
@@ -387,7 +393,7 @@ cv::Mat DocColorDecomposer::CvtLinRgbToSRgb(cv::Mat src) {
   return src;
 }
 
-std::map<std::array<float, 3>, long long> DocColorDecomposer::LutColorToN(const cv::Mat& src) {
+std::map<std::array<float, 3>, long long> DocColorDecomposer::ComputeColorToN(const cv::Mat& src) {
   std::map<std::array<float, 3>, long long> color_to_n;
 
   for (int y = 0; y < src.rows; ++y) {
@@ -411,15 +417,13 @@ cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb) {
       +1.0F / std::sqrt(3.0F), +1.0F / std::sqrt(3.0F), +1.0F / std::sqrt(3.0F)
   );
 
-  cv::Mat proj_in_lab;
-  if (rgb.at<float>(0) != 1.0F || rgb.at<float>(1) != 1.0F || rgb.at<float>(2) != 1.0F) {
+  bool is_white = (rgb.at<float>(0) == 1.0F) && (rgb.at<float>(1) == 1.0F) && (rgb.at<float>(2) == 1.0F);
+  if (!is_white) {
     cv::Mat proj_in_rgb = kWhite - (kNorm.dot(kWhite) / kNorm.dot(rgb - kWhite)) * (rgb - kWhite);
-    proj_in_lab = proj_in_rgb * kRgbToLab.t();
+    return proj_in_rgb * kRgbToLab.t();
   } else {
-    proj_in_lab = (cv::Mat_<float>(1, 3) << 0.0F, 0.0F, 0.0F);
+    return cv::Mat_<float>(1, 3) << 0.0F, 0.0F, 0.0F;
   }
-
-  return proj_in_lab;
 }
 
 std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_h) {
@@ -452,7 +456,7 @@ std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_
     std::ranges::rotate(extremes, extremes.begin() + 1);
   }
 
-  for (int i = 1; i < extremes.size(); i += 2) {
+  for (size_t i = 1; i < extremes.size(); i += 2) {
     int lh = hist.at<int>(extremes[i]) - hist.at<int>(extremes[(i - 1) % extremes.size()]);
     int rh = hist.at<int>(extremes[i]) - hist.at<int>(extremes[(i + 1) % extremes.size()]);
 
@@ -463,4 +467,46 @@ std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_
   std::ranges::sort(peaks);
 
   return peaks;
+}
+
+double DocColorDecomposer::ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask) {
+  double intersection_area = cv::countNonZero(predicted_mask & truth_mask);
+  double union_area = cv::countNonZero(predicted_mask | truth_mask);
+
+  return intersection_area / union_area;
+}
+
+double DocColorDecomposer::ComputePq(const std::vector<cv::Mat>& predicted_masks, const std::vector<cv::Mat>& truth_masks) {
+  double sum_iou = 0.0;
+  double tp = 0;
+
+  std::vector<bool> matched_predicted_masks(predicted_masks.size(), false);
+  std::vector<bool> matched_truth_masks(truth_masks.size(), false);
+
+  for (const auto& [predicted_mask_idx, predicted_mask] : predicted_masks | std::views::enumerate) {
+    double max_iou = 0.0;
+    size_t max_iou_idx = -1;
+
+    for (const auto& [truth_mask_idx, truth_mask] : truth_masks | std::views::enumerate) {
+      double iou = ComputeIou(predicted_mask, truth_mask);
+
+      if (iou >= max_iou) {
+        max_iou = iou;
+        max_iou_idx = truth_mask_idx;
+      }
+    }
+
+    if (max_iou >= 0.5) {
+      sum_iou += max_iou;
+      ++tp;
+
+      matched_predicted_masks[predicted_mask_idx] = true;
+      matched_truth_masks[max_iou_idx] = true;
+    }
+  }
+
+  double fp = static_cast<double>(std::ranges::count(matched_predicted_masks, false));
+  double fn = static_cast<double>(std::ranges::count(matched_truth_masks, false));
+
+  return sum_iou / (tp + 0.5 * (fp + fn));
 }
