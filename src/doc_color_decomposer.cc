@@ -1,14 +1,14 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
-#include "../src/plot_2d_lab_image.h"
-
-#include <opencv2/imgcodecs/imgcodecs.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
 #include <iomanip>
 #include <random>
 #include <ranges>
 #include <sstream>
+
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include "../src/plot_2d_lab_image.h"
 
 DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool preprocessing) {
   src_ = CvtSRgbToLinRgb(src);
@@ -38,7 +38,7 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<std::pair<std::array<float, 3>, long long>> shuffled_color_to_n(color_to_n_.begin(), color_to_n_.end());
+  std::vector<std::pair<std::array<float, 3>, int>> shuffled_color_to_n(color_to_n_.begin(), color_to_n_.end());
   std::ranges::shuffle(shuffled_color_to_n, std::mt19937(std::random_device()()));
   shuffled_color_to_n.resize(std::min(shuffled_color_to_n.size(), static_cast<size_t>(5000)));
 
@@ -103,8 +103,8 @@ cv::Mat DocColorDecomposer::Plot2dLab() & {
     cv::Mat rgb = (cv::Mat_<float>(1, 3) << color[0], color[1], color[2]);
     cv::Mat lab = ProjOnLab(rgb);
 
-    int y = std::lround(255.0F * (lab.at<float>(0, 1) + 2.95F));
-    int x = std::lround(255.0F * (lab.at<float>(0, 0) + 2.95F));
+    int y = std::lround(255.0f * (lab.at<float>(0, 1) + 2.95f));
+    int x = std::lround(255.0f * (lab.at<float>(0, 0) + 2.95f));
 
     plot.at<cv::Vec3f>(y, x) = cv::Vec3f(color[2], color[1], color[0]);
   }
@@ -116,7 +116,7 @@ std::string DocColorDecomposer::Plot1dPhi() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<long long> phi_to_n(360);
+  std::vector<int> phi_to_n(360);
   std::vector<std::array<float, 3>> phi_to_mean_color(360);
 
   for (const auto& [color, n] : color_to_n_) {
@@ -189,7 +189,7 @@ std::string DocColorDecomposer::Plot1dClusters() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<long long> cluster_to_n(360);
+  std::vector<int> cluster_to_n(360);
   std::vector<std::array<float, 3>> cluster_to_mean_color(360);
 
   for (const auto& [color, n] : color_to_n_) {
@@ -275,9 +275,9 @@ void DocColorDecomposer::ComputePhiHist() {
       cv::Mat lab = ProjOnLab(rgb);
 
       float phi_rad = std::atan2(-lab.at<float>(0, 1), lab.at<float>(0, 0));
-      int phi = std::lround((phi_rad * 180.0F / CV_PI) + 360.0F) % 360;
+      int phi = std::lround((phi_rad * 180.0f / CV_PI) + 360.0f) % 360;
 
-      phi_hist_.at<double>(phi) += static_cast<double>(n);
+      phi_hist_.at<double>(phi) += n;
 
       color_to_phi_[color] = phi;
     } else {
@@ -319,7 +319,7 @@ void DocColorDecomposer::ComputeLayers() {
 
   masks_ = std::vector<cv::Mat>(clusters_.size() + 1);
   for (auto& mask : masks_) {
-    mask = cv::Mat(processed_src_.rows, processed_src_.cols, CV_32FC3, cv::Vec3f(0.0F, 0.0F, 0.0F));
+    mask = cv::Mat::zeros(processed_src_.rows, processed_src_.cols, CV_32FC3);
   }
 
   for (int y = 0; y < processed_src_.rows; ++y) {
@@ -331,7 +331,7 @@ void DocColorDecomposer::ComputeLayers() {
       int cluster = (phi != -1) ? phi_to_cluster_[phi] : 0;
 
       layers_[cluster].at<cv::Vec3f>(y, x) = src_.at<cv::Vec3f>(y, x);
-      masks_[cluster].at<cv::Vec3f>(y, x) = cv::Vec3f(1.0F, 1.0F, 1.0F);
+      masks_[cluster].at<cv::Vec3f>(y, x) = cv::Vec3f::ones();
     }
   }
 
@@ -374,7 +374,7 @@ cv::Mat DocColorDecomposer::CvtSRgbToLinRgb(cv::Mat src) {
 
   // src.forEach<cv::Vec3f>([](cv::Vec3f& pixel, const int*) -> void {
   //   for (int i = 0; i < 3; ++i) {
-  //     pixel[i] = (pixel[i] <= 0.04045F) ? (pixel[i] / 12.92F) : std::pow((pixel[i] + 0.055F) / 1.055F, 2.4F);
+  //     pixel[i] = (pixel[i] <= 0.04045f) ? (pixel[i] / 12.92f) : std::pow((pixel[i] + 0.055f) / 1.055f, 2.4f);
   //   }
   // });
 
@@ -384,7 +384,7 @@ cv::Mat DocColorDecomposer::CvtSRgbToLinRgb(cv::Mat src) {
 cv::Mat DocColorDecomposer::CvtLinRgbToSRgb(cv::Mat src) {
   // src.forEach<cv::Vec3f>([](cv::Vec3f& pixel, const int*) -> void {
   //   for (int i = 0; i < 3; ++i) {
-  //     pixel[i] = (pixel[i] <= 0.0031308F) ? (pixel[i] * 12.92F) : (1.055F * std::pow(pixel[i], 1.0F / 2.4F) - 0.055F);
+  //     pixel[i] = (pixel[i] <= 0.0031308f) ? (pixel[i] * 12.92f) : (1.055f * std::pow(pixel[i], 1.0f / 2.4f) - 0.055f);
   //   }
   // });
 
@@ -393,8 +393,8 @@ cv::Mat DocColorDecomposer::CvtLinRgbToSRgb(cv::Mat src) {
   return src;
 }
 
-std::map<std::array<float, 3>, long long> DocColorDecomposer::ComputeColorToN(const cv::Mat& src) {
-  std::map<std::array<float, 3>, long long> color_to_n;
+std::map<std::array<float, 3>, int> DocColorDecomposer::ComputeColorToN(const cv::Mat& src) {
+  std::map<std::array<float, 3>, int> color_to_n;
 
   for (int y = 0; y < src.rows; ++y) {
     for (int x = 0; x < src.cols; ++x) {
@@ -409,20 +409,22 @@ std::map<std::array<float, 3>, long long> DocColorDecomposer::ComputeColorToN(co
 }
 
 cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb) {
-  const cv::Mat kWhite = (cv::Mat_<float>(1, 3) << 1.0F, 1.0F, 1.0F);
-  const cv::Mat kNorm = (cv::Mat_<float>(1, 3) << 1.0F / std::sqrt(3.0F), 1.0F / std::sqrt(3.0F), 1.0F / std::sqrt(3.0F));
+  const cv::Mat kWhite = (cv::Mat_<float>(1, 3) << 1.0f, 1.0f, 1.0f);
+  const cv::Mat kNorm = (cv::Mat_<float>(1, 3) << 1.0f / std::sqrt(3.0f), 1.0f / std::sqrt(3.0f), 1.0f / std::sqrt(3.0f));
   const cv::Mat kRgbToLab = (cv::Mat_<float>(3, 3) <<
-      -1.0F / std::sqrt(2.0F), +1.0F / std::sqrt(2.0F), -0.0F,
-      +1.0F / std::sqrt(6.0F), +1.0F / std::sqrt(6.0F), -2.0F / std::sqrt(6.0F),
-      +1.0F / std::sqrt(3.0F), +1.0F / std::sqrt(3.0F), +1.0F / std::sqrt(3.0F)
+      -1.0f / std::sqrt(2.0f), +1.0f / std::sqrt(2.0f), -0.0f,
+      +1.0f / std::sqrt(6.0f), +1.0f / std::sqrt(6.0f), -2.0f / std::sqrt(6.0f),
+      +1.0f / std::sqrt(3.0f), +1.0f / std::sqrt(3.0f), +1.0f / std::sqrt(3.0f)
   );
 
-  bool is_white = (rgb.at<float>(0) == 1.0F) && (rgb.at<float>(1) == 1.0F) && (rgb.at<float>(2) == 1.0F);
+  bool is_white = (rgb.at<float>(0) == 1.0f) && (rgb.at<float>(1) == 1.0f) && (rgb.at<float>(2) == 1.0f);
   if (!is_white) {
     cv::Mat proj_in_rgb = kWhite - (kNorm.dot(kWhite) / kNorm.dot(rgb - kWhite)) * (rgb - kWhite);
-    return proj_in_rgb * kRgbToLab.t();
+    cv::Mat proj_in_lab = proj_in_rgb * kRgbToLab.t();
+
+    return proj_in_lab;
   } else {
-    return cv::Mat_<float>(1, 3) << 0.0F, 0.0F, 0.0F;
+    return cv::Mat_<float>(1, 3) << 0.0f, 0.0f, 0.0f;
   }
 }
 
@@ -478,7 +480,7 @@ double DocColorDecomposer::ComputeIou(const cv::Mat& predicted_mask, const cv::M
 
 double DocColorDecomposer::ComputePq(const std::vector<cv::Mat>& predicted_masks, const std::vector<cv::Mat>& truth_masks) {
   double sum_iou = 0.0;
-  double tp = 0;
+  double tp = 0.0;
 
   std::vector<bool> matched_predicted_masks(predicted_masks.size(), false);
   std::vector<bool> matched_truth_masks(truth_masks.size(), false);

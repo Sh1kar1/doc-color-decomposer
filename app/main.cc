@@ -1,13 +1,13 @@
 #include "doc_color_decomposer/doc_color_decomposer.h"
 
-#include <opencv2/core/utils/logger.hpp>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
-
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <ranges>
 #include <regex>
+
+#include <opencv2/core/utils/logger.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 
 int main(int argc, char** argv) {
   std::vector<std::string> args(argv + 1, argv + argc);
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
       } else {
         std::cerr << "Error: invalid arguments\n";
         std::cerr << "Checkout `./doc-color-decomposer-app --help`";
-        return EXIT_FAILURE;
+        return 1;
       }
     }
 
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     } catch (...) {
       std::cerr << "Error: invalid arguments\n";
       std::cerr << "Checkout `./doc-color-decomposer-app --help`";
-      return EXIT_FAILURE;
+      return 1;
     }
 
     DocColorDecomposer dcd;
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
     } catch (...) {
       std::cerr << "Error: invalid image";
-      return EXIT_FAILURE;
+      return 1;
     }
 
     for (const auto& [i, layer] : (masking ? dcd.GetMasks() : dcd.GetLayers()) | std::views::enumerate) {
@@ -93,8 +93,8 @@ int main(int argc, char** argv) {
   } else {
     std::cerr << "Error: invalid arguments\n";
     std::cerr << "Checkout `./doc-color-decomposer-app --help`";
-    return EXIT_FAILURE;
+    return 1;
   }
 
-  return EXIT_SUCCESS;
+  return 0;
 }

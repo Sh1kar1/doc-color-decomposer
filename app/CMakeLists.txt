@@ -1,6 +1,6 @@
 project(${CMAKE_PROJECT_NAME}-app LANGUAGES CXX)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cc)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_PROJECT_NAME}-library)
 

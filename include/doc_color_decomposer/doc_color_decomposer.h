@@ -1,18 +1,18 @@
-#ifndef DOC_COLOR_DECOMPOSER_H
-#define DOC_COLOR_DECOMPOSER_H
-
-#include <opencv2/core/core.hpp>
+#ifndef DOC_COLOR_DECOMPOSER_H_
+#define DOC_COLOR_DECOMPOSER_H_
 
 #include <array>
 #include <map>
 #include <string>
 #include <vector>
 
+#include <opencv2/core/core.hpp>
+
 /**
  * @brief Interface of the [Doc Color Decomposer](https://github.com/Sh1kar1/doc-color-decomposer) library for documents decomposition by color clustering
  */
 class [[nodiscard]] DocColorDecomposer final {
-public:
+ public:
   /**
    * @brief Constructs an empty instance
    */
@@ -81,7 +81,7 @@ public:
    */
   [[nodiscard]] std::string Plot1dClusters() &;
 
-private:
+ private:
   void ComputePhiHist();
   void ComputeClusters();
   void ComputeLayers();
@@ -90,7 +90,7 @@ private:
   [[nodiscard]] static cv::Mat ThreshL(cv::Mat src, double thresh = 50.0);
   [[nodiscard]] static cv::Mat CvtSRgbToLinRgb(cv::Mat src);
   [[nodiscard]] static cv::Mat CvtLinRgbToSRgb(cv::Mat src);
-  [[nodiscard]] static std::map<std::array<float, 3>, long long> ComputeColorToN(const cv::Mat& src);
+  [[nodiscard]] static std::map<std::array<float, 3>, int> ComputeColorToN(const cv::Mat& src);
   [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb);
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
   [[nodiscard]] static double ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask);
@@ -102,11 +102,11 @@ private:
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> clusters_;
-  std::map<std::array<float, 3>, long long> color_to_n_;
+  std::map<std::array<float, 3>, int> color_to_n_;
   std::map<std::array<float, 3>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
   std::vector<cv::Mat> masks_;
   std::vector<cv::Mat> layers_;
 };
 
-#endif // DOC_COLOR_DECOMPOSER_H
+#endif  // DOC_COLOR_DECOMPOSER_H_
