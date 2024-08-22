@@ -88,9 +88,7 @@ class [[nodiscard]] DocColorDecomposer final {
 
   [[nodiscard]] static cv::Mat ThreshS(cv::Mat src, double thresh = 10.0);
   [[nodiscard]] static cv::Mat ThreshL(cv::Mat src, double thresh = 50.0);
-  [[nodiscard]] static cv::Mat CvtSRgbToLinRgb(cv::Mat src);
-  [[nodiscard]] static cv::Mat CvtLinRgbToSRgb(cv::Mat src);
-  [[nodiscard]] static std::map<std::array<float, 3>, int> ComputeColorToN(const cv::Mat& src);
+  [[nodiscard]] static std::map<std::array<int, 3>, int> ComputeColorToN(const cv::Mat& src);
   [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb);
   [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
   [[nodiscard]] static double ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask);
@@ -102,8 +100,8 @@ class [[nodiscard]] DocColorDecomposer final {
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> clusters_;
-  std::map<std::array<float, 3>, int> color_to_n_;
-  std::map<std::array<float, 3>, int> color_to_phi_;
+  std::map<std::array<int, 3>, int> color_to_n_;
+  std::map<std::array<int, 3>, int> color_to_phi_;
   std::vector<int> phi_to_cluster_;
   std::vector<cv::Mat> masks_;
   std::vector<cv::Mat> layers_;
