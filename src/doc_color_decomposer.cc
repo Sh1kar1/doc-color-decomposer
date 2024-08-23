@@ -22,7 +22,7 @@ DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool p
   processed_src_ = preprocessing ? ThreshL(ThreshS(src)) : src_;
   tolerance_ = tolerance;
 
-  color_to_n_ = ComputeColorToN(processed_src_);
+  rgb_to_n_ = ComputeColorToN(processed_src_);
 
   ComputePhiHist();
   ComputeClusters();
@@ -86,13 +86,13 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
   plot << "table[] {\n";
   plot << "R G B\n";
 
-  std::vector<std::pair<std::array<int, 3>, int>> shuffled_color_to_n;
-  std::ranges::sample(color_to_n_, std::back_inserter(shuffled_color_to_n), 5000, std::default_random_engine(std::random_device()()));
+  std::vector<std::pair<std::array<int, 3>, int>> shuffled_rgb_to_n;
+  std::ranges::sample(rgb_to_n_, std::back_inserter(shuffled_rgb_to_n), 5000, std::default_random_engine(std::random_device()()));
 
-  for (const auto& color : shuffled_color_to_n | std::views::keys) {
-    double r = color[0] / 255.0;
-    double g = color[1] / 255.0;
-    double b = color[2] / 255.0;
+  for (const auto& rgb : shuffled_rgb_to_n | std::views::keys) {
+    double r = rgb[0] / 255.0;
+    double g = rgb[1] / 255.0;
+    double b = rgb[2] / 255.0;
 
     plot << r << ' ' << g << ' ' << b << '\n';
   }
@@ -108,16 +108,16 @@ std::string DocColorDecomposer::Plot3dRgb(double yaw, double pitch) & {
 cv::Mat DocColorDecomposer::Plot2dLab() & {
   cv::Mat plot = cv::imdecode(cv::Mat(1, doc_color_decomposer::plot_2d_lab_len, CV_8U, doc_color_decomposer::plot_2d_lab_data), cv::IMREAD_UNCHANGED);
 
-  for (const auto& color : color_to_n_ | std::views::keys) {
-    int r = color[0];
-    int g = color[1];
-    int b = color[2];
+  for (const auto& rgb : rgb_to_n_ | std::views::keys) {
+    int r = rgb[0];
+    int g = rgb[1];
+    int b = rgb[2];
 
-    cv::Mat rgb = (cv::Mat_<int>(1, 3) << r, g, b);
-    cv::Mat lab = ProjOnLab(rgb);
+    cv::Mat mat_rgb = (cv::Mat_<int>(1, 3) << r, g, b);
+    cv::Mat mat_lab = ProjOnLab(mat_rgb);
 
-    auto lab_a = lab.at<int>(0, 0);
-    auto lab_b = lab.at<int>(0, 1);
+    auto lab_a = mat_lab.at<int>(0, 0);
+    auto lab_b = mat_lab.at<int>(0, 1);
 
     int x = std::lround(lab_a + 752);
     int y = std::lround(lab_b + 752);
@@ -132,26 +132,26 @@ std::string DocColorDecomposer::Plot1dPhi() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<std::array<int, 3>> phi_to_sum_color(360);
+  std::vector<std::array<int, 3>> phi_to_sum_rgb(360);
   std::vector<int> phi_to_n(360);
 
-  for (const auto& [color, n] : color_to_n_) {
-    int phi = color_to_phi_[color];
+  for (const auto& [rgb, n] : rgb_to_n_) {
+    int phi = rgb_to_phi_[rgb];
 
     if (phi != -1) {
-      std::ranges::transform(phi_to_sum_color[phi], (color | std::views::transform([&n](int c) { return c * n; })), phi_to_sum_color[phi].begin(), std::plus{});
+      std::ranges::transform(phi_to_sum_rgb[phi], (rgb | std::views::transform([&n](int c) { return c * n; })), phi_to_sum_rgb[phi].begin(), std::plus{});
       phi_to_n[phi] += n;
     }
   }
 
-  std::vector<std::array<int, 3>> phi_to_mean_color(360);
+  std::vector<std::array<int, 3>> phi_to_mean_rgb(360);
 
-  for (const auto& [phi, mean_color] : phi_to_mean_color | std::views::enumerate) {
-    std::array<int, 3> sum_color = phi_to_sum_color[phi];
+  for (const auto& [phi, mean_rgb] : phi_to_mean_rgb | std::views::enumerate) {
+    std::array<int, 3> sum_rgb = phi_to_sum_rgb[phi];
     int n = phi_to_n[phi];
 
     if (n != 0) {
-      std::ranges::transform(sum_color, mean_color.begin(), [&n](int c) { return c / n; });
+      std::ranges::transform(sum_rgb, mean_rgb.begin(), [&n](int c) { return c / n; });
     }
   }
 
@@ -181,11 +181,11 @@ std::string DocColorDecomposer::Plot1dPhi() & {
   plot << "]\n\n";
 
   for (const auto& phi : std::views::iota(0, 359)) {
-    std::array<int, 3> mean_color = phi_to_mean_color[phi];
+    std::array<int, 3> mean_rgb = phi_to_mean_rgb[phi];
 
-    double r = mean_color[0] / 255.0;
-    double g = mean_color[1] / 255.0;
-    double b = mean_color[2] / 255.0;
+    double r = mean_rgb[0] / 255.0;
+    double g = mean_rgb[1] / 255.0;
+    double b = mean_rgb[2] / 255.0;
 
     int prev_phi_hist = std::lround(phi_hist_.at<double>(phi));
     int next_phi_hist = std::lround(phi_hist_.at<double>(phi + 1));
@@ -216,27 +216,27 @@ std::string DocColorDecomposer::Plot1dClusters() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<std::array<int, 3>> cluster_to_sum_color(clusters_.size() + 1);
+  std::vector<std::array<int, 3>> cluster_to_sum_rgb(clusters_.size() + 1);
   std::vector<int> cluster_to_n(clusters_.size() + 1);
 
-  for (const auto& [color, n] : color_to_n_) {
-    int phi = color_to_phi_[color];
+  for (const auto& [rgb, n] : rgb_to_n_) {
+    int phi = rgb_to_phi_[rgb];
     int cluster = (phi != -1) ? phi_to_cluster_[phi] : -1;
 
     if (cluster != -1) {
-      std::ranges::transform(cluster_to_sum_color[cluster], (color | std::views::transform([&n](int c) { return c * n; })), cluster_to_sum_color[cluster].begin(), std::plus{});
+      std::ranges::transform(cluster_to_sum_rgb[cluster], (rgb | std::views::transform([&n](int c) { return c * n; })), cluster_to_sum_rgb[cluster].begin(), std::plus{});
       cluster_to_n[cluster] += n;
     }
   }
 
-  std::vector<std::array<int, 3>> cluster_to_mean_color(clusters_.size() + 1);
+  std::vector<std::array<int, 3>> cluster_to_mean_rgb(clusters_.size() + 1);
 
-  for (const auto& [cluster, mean_color] : cluster_to_mean_color | std::views::enumerate) {
-    std::array<int, 3> sum_color = cluster_to_sum_color[cluster];
+  for (const auto& [cluster, mean_rgb] : cluster_to_mean_rgb | std::views::enumerate) {
+    std::array<int, 3> sum_rgb = cluster_to_sum_rgb[cluster];
     int n = cluster_to_n[cluster];
 
     if (n != 0) {
-      std::ranges::transform(sum_color, mean_color.begin(), [&n](int c) { return c / n; });
+      std::ranges::transform(sum_rgb, mean_rgb.begin(), [&n](int c) { return c / n; });
     }
   }
 
@@ -267,11 +267,11 @@ std::string DocColorDecomposer::Plot1dClusters() & {
 
   for (const auto& phi : std::views::iota(0, 359)) {
     int cluster = phi_to_cluster_[phi];
-    std::array<int, 3> mean_color = cluster_to_mean_color[cluster];
+    std::array<int, 3> mean_rgb = cluster_to_mean_rgb[cluster];
 
-    double r = mean_color[0] / 255.0;
-    double g = mean_color[1] / 255.0;
-    double b = mean_color[2] / 255.0;
+    double r = mean_rgb[0] / 255.0;
+    double g = mean_rgb[1] / 255.0;
+    double b = mean_rgb[2] / 255.0;
 
     auto prev_smoothed_phi_hist = smoothed_phi_hist_.at<int>(phi);
     auto next_smoothed_phi_hist = smoothed_phi_hist_.at<int>(phi + 1);
@@ -306,27 +306,27 @@ std::string DocColorDecomposer::Plot1dClusters() & {
 void DocColorDecomposer::ComputePhiHist() {
   phi_hist_ = cv::Mat::zeros(1, 360, CV_64FC1);
 
-  for (const auto& [color, n] : color_to_n_) {
-    int r = color[0];
-    int g = color[1];
-    int b = color[2];
+  for (const auto& [rgb, n] : rgb_to_n_) {
+    int r = rgb[0];
+    int g = rgb[1];
+    int b = rgb[2];
 
     bool is_gray = (r == g) && (g == b) && (r == b);
     if (!is_gray) {
-      cv::Mat rgb = (cv::Mat_<int>(1, 3) << r, g, b);
-      cv::Mat lab = ProjOnLab(rgb);
+      cv::Mat mat_rgb = (cv::Mat_<int>(1, 3) << r, g, b);
+      cv::Mat mat_lab = ProjOnLab(mat_rgb);
 
-      auto lab_a = lab.at<int>(0, 0);
-      auto lab_b = lab.at<int>(0, 1);
+      auto lab_a = mat_lab.at<int>(0, 0);
+      auto lab_b = mat_lab.at<int>(0, 1);
 
       double phi_rad = std::atan2(-lab_b, lab_a);
       int phi = std::lround((phi_rad * 180.0 / CV_PI) + 360.0) % 360;
 
       phi_hist_.at<double>(phi) += n;
 
-      color_to_phi_[color] = phi;
+      rgb_to_phi_[mat_rgb] = phi;
     } else {
-      color_to_phi_[color] = -1;
+      rgb_to_phi_[rgb] = -1;
     }
   }
 
@@ -368,9 +368,9 @@ void DocColorDecomposer::ComputeLayers() {
 
   for (const auto& [y, x] : std::views::cartesian_product(std::views::iota(0, processed_src_.rows), std::views::iota(0, processed_src_.cols))) {
     const auto& pixel = processed_src_.at<cv::Vec3b>(y, x);
-    std::array<int, 3> color = {pixel[2], pixel[1], pixel[0]};
+    std::array<int, 3> rgb = {pixel[2], pixel[1], pixel[0]};
 
-    int phi = color_to_phi_[color];
+    int phi = rgb_to_phi_[rgb];
     int cluster = (phi != -1) ? phi_to_cluster_[phi] : 0;
 
     layers_[cluster].at<cv::Vec3b>(y, x) = src_.at<cv::Vec3b>(y, x);
@@ -409,16 +409,16 @@ cv::Mat DocColorDecomposer::ThreshL(cv::Mat src, double thresh) {
 }
 
 std::map<std::array<int, 3>, int> DocColorDecomposer::ComputeColorToN(const cv::Mat& src) {
-  std::map<std::array<int, 3>, int> color_to_n;
+  std::map<std::array<int, 3>, int> rgb_to_n;
 
   for (const auto& [y, x] : std::views::cartesian_product(std::views::iota(0, src.rows), std::views::iota(0, src.cols))) {
     const auto& pixel = src.at<cv::Vec3b>(y, x);
-    std::array<int, 3> color = {pixel[2], pixel[1], pixel[0]};
+    std::array<int, 3> rgb = {pixel[2], pixel[1], pixel[0]};
 
-    ++color_to_n[color];
+    ++rgb_to_n[rgb];
   }
 
-  return color_to_n;
+  return rgb_to_n;
 }
 
 cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb) {

@@ -100,8 +100,8 @@ class [[nodiscard]] DocColorDecomposer final {
   cv::Mat phi_hist_;
   cv::Mat smoothed_phi_hist_;
   std::vector<int> clusters_;
-  std::map<std::array<int, 3>, int> color_to_n_;
-  std::map<std::array<int, 3>, int> color_to_phi_;
+  std::map<std::array<int, 3>, int> rgb_to_n_;
+  std::map<std::array<int, 3>, int> rgb_to_phi_;
   std::vector<int> phi_to_cluster_;
   std::vector<cv::Mat> masks_;
   std::vector<cv::Mat> layers_;
