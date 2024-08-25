@@ -1,6 +1,6 @@
 project(${CMAKE_PROJECT_NAME}-library LANGUAGES CXX)
 
-add_library(${PROJECT_NAME} STATIC doc_color_decomposer.cc)
+add_library(${PROJECT_NAME} STATIC doc_color_decomposer.cc utils.cc data.cc)
 
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 

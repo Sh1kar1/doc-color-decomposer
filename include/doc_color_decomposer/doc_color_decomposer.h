@@ -8,6 +8,8 @@
 
 #include <opencv2/core/core.hpp>
 
+namespace doc_color_decomposer {
+
 /**
  * @brief Interface of the [Doc Color Decomposer](https://github.com/Sh1kar1/doc-color-decomposer) library for documents decomposition by color clustering
  */
@@ -89,17 +91,6 @@ class [[nodiscard]] DocColorDecomposer final {
   [[nodiscard]] std::vector<std::array<int, 3>> ComputePhiToMeanRgb();
   [[nodiscard]] std::vector<std::array<int, 3>> ComputeClusterToMeanRgb();
 
-  [[nodiscard]] static cv::Mat ThreshS(cv::Mat src, double thresh = 10.0);
-  [[nodiscard]] static cv::Mat ThreshL(cv::Mat src, double thresh = 50.0);
-  [[nodiscard]] static std::map<std::array<int, 3>, int> ComputeColorToN(const cv::Mat& src);
-  [[nodiscard]] static cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transformation);
-  [[nodiscard]] static cv::Mat ProjOnLab(cv::Mat rgb);
-  [[nodiscard]] static int RadToDeg(double rad);
-  [[nodiscard]] static std::vector<int> FindExtremes(const cv::Mat& hist);
-  [[nodiscard]] static std::vector<int> FindPeaks(const cv::Mat& hist, int min_h = 0);
-  [[nodiscard]] static double ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask);
-  [[nodiscard]] static double ComputePq(const std::vector<cv::Mat>& predicted_masks, const std::vector<cv::Mat>& truth_masks);
-
   cv::Mat src_;
   cv::Mat processed_src_;
   int tolerance_;
@@ -113,5 +104,7 @@ class [[nodiscard]] DocColorDecomposer final {
   std::vector<cv::Mat> masks_;
   std::vector<cv::Mat> layers_;
 };
+
+}  // namespace doc_color_decomposer
 
 #endif  // DOC_COLOR_DECOMPOSER_H_

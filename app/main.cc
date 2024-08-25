@@ -6,7 +6,6 @@
 #include <ranges>
 #include <regex>
 
-#include <opencv2/core/utils/logger.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 
 int main(int argc, char** argv) {
@@ -39,8 +38,6 @@ int main(int argc, char** argv) {
       }
     }
 
-    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
-
     try {
       if (!std::filesystem::exists(dst_path) || !std::filesystem::is_directory(dst_path)) {
         std::filesystem::create_directory(dst_path);
@@ -52,18 +49,18 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    DocColorDecomposer dcd;
+    doc_color_decomposer::DocColorDecomposer dcd;
     try {
       cv::Mat src = cv::imread(src_path.string(), cv::IMREAD_COLOR);
-      dcd = DocColorDecomposer(src, tolerance, !nopreprocess);
+      dcd = doc_color_decomposer::DocColorDecomposer(src, tolerance, !nopreprocess);
 
     } catch (...) {
       std::cerr << "Error: invalid image";
       return 1;
     }
 
-    for (const auto& [i, layer] : (masking ? dcd.GetMasks() : dcd.GetLayers()) | std::views::enumerate) {
-      cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(i + 1) + ".png", layer);
+    for (const auto& [layer_idx, layer] : (masking ? dcd.GetMasks() : dcd.GetLayers()) | std::views::enumerate) {
+      cv::imwrite((dst_path / (src_path.stem().string() + "-layer-")).string() + std::to_string(layer_idx + 1) + ".png", layer);
     }
 
     if (visualize) {
