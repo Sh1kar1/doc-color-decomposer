@@ -113,11 +113,10 @@ cv::Mat DocColorDecomposer::Plot2dLab() & {
     int g = rgb[1];
     int b = rgb[2];
 
-    cv::Mat mat_rgb = (cv::Mat_<int>(1, 3) << r, g, b);
-    cv::Mat mat_lab = ProjOnLab(mat_rgb);
+    std::array<int, 3> lab = rgb_to_lab_[rgb];
 
-    auto lab_a = mat_lab.at<int>(0, 0);
-    auto lab_b = mat_lab.at<int>(0, 1);
+    int lab_a = lab[0];
+    int lab_b = lab[1];
 
     int x = std::lround(lab_a + 752);
     int y = std::lround(lab_b + 752);
@@ -131,29 +130,6 @@ cv::Mat DocColorDecomposer::Plot2dLab() & {
 std::string DocColorDecomposer::Plot1dPhi() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
-
-  std::vector<std::array<int, 3>> phi_to_sum_rgb(360);
-  std::vector<int> phi_to_n(360);
-
-  for (const auto& [rgb, n] : rgb_to_n_) {
-    int phi = rgb_to_phi_[rgb];
-
-    if (phi != -1) {
-      std::ranges::transform(phi_to_sum_rgb[phi], (rgb | std::views::transform([&n](int c) { return c * n; })), phi_to_sum_rgb[phi].begin(), std::plus{});
-      phi_to_n[phi] += n;
-    }
-  }
-
-  std::vector<std::array<int, 3>> phi_to_mean_rgb(360);
-
-  for (const auto& [phi, mean_rgb] : phi_to_mean_rgb | std::views::enumerate) {
-    std::array<int, 3> sum_rgb = phi_to_sum_rgb[phi];
-    int n = phi_to_n[phi];
-
-    if (n != 0) {
-      std::ranges::transform(sum_rgb, mean_rgb.begin(), [&n](int c) { return c / n; });
-    }
-  }
 
   double max_n;
   cv::minMaxLoc(phi_hist_, nullptr, &max_n, nullptr, nullptr);
@@ -179,6 +155,8 @@ std::string DocColorDecomposer::Plot1dPhi() & {
   plot << "  xlabel={$\\phi$},\n";
   plot << "  ylabel={$n$}\n";
   plot << "]\n\n";
+
+  std::vector<std::array<int, 3>> phi_to_mean_rgb = ComputePhiToMeanRgb();
 
   for (const auto& phi : std::views::iota(0, 359)) {
     std::array<int, 3> mean_rgb = phi_to_mean_rgb[phi];
@@ -216,30 +194,6 @@ std::string DocColorDecomposer::Plot1dClusters() & {
   std::stringstream plot;
   plot << std::fixed << std::setprecision(4);
 
-  std::vector<std::array<int, 3>> cluster_to_sum_rgb(clusters_.size() + 1);
-  std::vector<int> cluster_to_n(clusters_.size() + 1);
-
-  for (const auto& [rgb, n] : rgb_to_n_) {
-    int phi = rgb_to_phi_[rgb];
-    int cluster = (phi != -1) ? phi_to_cluster_[phi] : -1;
-
-    if (cluster != -1) {
-      std::ranges::transform(cluster_to_sum_rgb[cluster], (rgb | std::views::transform([&n](int c) { return c * n; })), cluster_to_sum_rgb[cluster].begin(), std::plus{});
-      cluster_to_n[cluster] += n;
-    }
-  }
-
-  std::vector<std::array<int, 3>> cluster_to_mean_rgb(clusters_.size() + 1);
-
-  for (const auto& [cluster, mean_rgb] : cluster_to_mean_rgb | std::views::enumerate) {
-    std::array<int, 3> sum_rgb = cluster_to_sum_rgb[cluster];
-    int n = cluster_to_n[cluster];
-
-    if (n != 0) {
-      std::ranges::transform(sum_rgb, mean_rgb.begin(), [&n](int c) { return c / n; });
-    }
-  }
-
   double max_n;
   cv::minMaxLoc(smoothed_phi_hist_, nullptr, &max_n, nullptr, nullptr);
   int round_max_n = std::lround(max_n);
@@ -264,6 +218,8 @@ std::string DocColorDecomposer::Plot1dClusters() & {
   plot << "  xlabel={$\\phi$},\n";
   plot << "  ylabel={$n$}\n";
   plot << "]\n\n";
+
+  std::vector<std::array<int, 3>> cluster_to_mean_rgb = ComputeClusterToMeanRgb();
 
   for (const auto& phi : std::views::iota(0, 359)) {
     int cluster = phi_to_cluster_[phi];
@@ -313,20 +269,19 @@ void DocColorDecomposer::ComputePhiHist() {
 
     bool is_gray = (r == g) && (g == b) && (r == b);
     if (!is_gray) {
-      cv::Mat mat_rgb = (cv::Mat_<int>(1, 3) << r, g, b);
-      cv::Mat mat_lab = ProjOnLab(mat_rgb);
+      cv::Mat proj_rgb = (cv::Mat_<int>(1, 3) << r, g, b);
+      cv::Mat proj_lab = ProjOnLab(proj_rgb);
 
-      auto lab_a = mat_lab.at<int>(0, 0);
-      auto lab_b = mat_lab.at<int>(0, 1);
+      auto lab_a = proj_lab.at<int>(0, 0);
+      auto lab_b = proj_lab.at<int>(0, 1);
+      auto lab_l = proj_lab.at<int>(0, 2);
 
       double phi_rad = std::atan2(-lab_b, lab_a);
-      int phi = std::lround((phi_rad * 180.0 / CV_PI) + 360.0) % 360;
+      int phi = RadToDeg(phi_rad);
 
       phi_hist_.at<double>(phi) += n;
-
-      rgb_to_phi_[mat_rgb] = phi;
-    } else {
-      rgb_to_phi_[rgb] = -1;
+      rgb_to_lab_[rgb] = {lab_a, lab_b, lab_l};
+      lab_to_phi_[proj_lab] = phi;
     }
   }
 
@@ -341,7 +296,7 @@ void DocColorDecomposer::ComputeClusters() {
   cv::minMaxLoc(smoothed_phi_hist_, nullptr, &max_h, nullptr, nullptr);
   int round_max_h = std::lround(0.01 * max_h);
 
-  std::vector<int> peaks = FindHistPeaks(smoothed_phi_hist_, round_max_h);
+  std::vector<int> peaks = FindPeaks(smoothed_phi_hist_, round_max_h);
   peaks.push_back(peaks[0] + 360);
 
   std::transform(peaks.begin(), peaks.end() - 1, peaks.begin() + 1, std::back_inserter(clusters_), [](int a, int b) { return ((a + b) / 2) % 360; });
@@ -370,12 +325,69 @@ void DocColorDecomposer::ComputeLayers() {
     const auto& pixel = processed_src_.at<cv::Vec3b>(y, x);
     std::array<int, 3> rgb = {pixel[2], pixel[1], pixel[0]};
 
-    int phi = rgb_to_phi_[rgb];
-    int cluster = (phi != -1) ? phi_to_cluster_[phi] : 0;
+    std::array<int, 3> lab = rgb_to_lab_[rgb];
+    int cluster = (lab != std::array<int, 3>{0, 0, 0}) ? phi_to_cluster_[lab_to_phi_[lab]] : 0;
 
     layers_[cluster].at<cv::Vec3b>(y, x) = src_.at<cv::Vec3b>(y, x);
     masks_[cluster].at<uchar>(y, x) = 255;
   }
+}
+
+std::vector<std::array<int, 3>> DocColorDecomposer::ComputePhiToMeanRgb() {
+  std::vector<std::array<int, 3>> phi_to_mean_rgb(360);
+  std::vector<std::array<int, 3>> phi_to_sum_rgb(360);
+  std::vector<int> phi_to_n(360);
+
+  for (const auto& [rgb, n] : rgb_to_n_) {
+    std::array<int, 3> lab = rgb_to_lab_[rgb];
+
+    if (lab != std::array<int, 3>{0, 0, 0}) {
+      int phi = lab_to_phi_[lab];
+
+      std::ranges::transform(phi_to_sum_rgb[phi], (rgb | std::views::transform([&n](int c) { return c * n; })), phi_to_sum_rgb[phi].begin(), std::plus{});
+      phi_to_n[phi] += n;
+    }
+  }
+
+  for (const auto& [phi, mean_rgb] : phi_to_mean_rgb | std::views::enumerate) {
+    std::array<int, 3> sum_rgb = phi_to_sum_rgb[phi];
+    int n = phi_to_n[phi];
+
+    if (n != 0) {
+      std::ranges::transform(sum_rgb, mean_rgb.begin(), [&n](int c) { return c / n; });
+    }
+  }
+
+  return phi_to_mean_rgb;
+}
+
+std::vector<std::array<int, 3>> DocColorDecomposer::ComputeClusterToMeanRgb() {
+  std::vector<std::array<int, 3>> cluster_to_mean_rgb(clusters_.size() + 1);
+  std::vector<std::array<int, 3>> cluster_to_sum_rgb(clusters_.size() + 1);
+  std::vector<int> cluster_to_n(clusters_.size() + 1);
+
+  for (const auto& [rgb, n] : rgb_to_n_) {
+    std::array<int, 3> lab = rgb_to_lab_[rgb];
+
+    if (lab != std::array<int, 3>{0, 0, 0}) {
+      int phi = lab_to_phi_[lab];
+      int cluster = phi_to_cluster_[phi];
+
+      std::ranges::transform(cluster_to_sum_rgb[cluster], (rgb | std::views::transform([&n](int c) { return c * n; })), cluster_to_sum_rgb[cluster].begin(), std::plus{});
+      cluster_to_n[cluster] += n;
+    }
+  }
+
+  for (const auto& [cluster, mean_rgb] : cluster_to_mean_rgb | std::views::enumerate) {
+    std::array<int, 3> sum_rgb = cluster_to_sum_rgb[cluster];
+    int n = cluster_to_n[cluster];
+
+    if (n != 0) {
+      std::ranges::transform(sum_rgb, mean_rgb.begin(), [&n](int c) { return c / n; });
+    }
+  }
+
+  return cluster_to_mean_rgb;
 }
 
 cv::Mat DocColorDecomposer::ThreshS(cv::Mat src, double thresh) {
@@ -421,7 +433,11 @@ std::map<std::array<int, 3>, int> DocColorDecomposer::ComputeColorToN(const cv::
   return rgb_to_n;
 }
 
-cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb) {
+cv::Mat DocColorDecomposer::ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transformation) {
+  return (norm.dot(point - center) != 0.0) ? ((center - (norm.dot(center) / norm.dot(point - center)) * (point - center)) * transformation.t()) : cv::Mat((cv::Mat_<int>(1, 3) << 0, 0, 0));
+}
+
+cv::Mat DocColorDecomposer::ProjOnLab(cv::Mat rgb) {
   const cv::Mat kWhite = (cv::Mat_<double>(1, 3) << 1.0, 1.0, 1.0);
   const cv::Mat kNorm = (cv::Mat_<double>(1, 3) << 1.0 / std::sqrt(3.0), 1.0 / std::sqrt(3.0), 1.0 / std::sqrt(3.0));
   const cv::Mat kRgbToLab = (cv::Mat_<double>(3, 3) <<
@@ -430,29 +446,21 @@ cv::Mat DocColorDecomposer::ProjOnLab(const cv::Mat& rgb) {
       +1.0 / std::sqrt(3.0), +1.0 / std::sqrt(3.0), +1.0 / std::sqrt(3.0)
   );
 
-  cv::Mat norm_rgb;
-  rgb.convertTo(norm_rgb, CV_64FC3, 1.0 / 255.0);
+  rgb.convertTo(rgb, CV_64FC3, 1.0 / 255.0);
 
-  auto r = norm_rgb.at<double>(0);
-  auto g = norm_rgb.at<double>(1);
-  auto b = norm_rgb.at<double>(2);
+  cv::Mat proj = ProjOnPlane(rgb, kWhite, kNorm, kRgbToLab);
 
-  bool is_white = (r == 1.0) && (g == 1.0) && (b == 1.0);
-  if (!is_white) {
-    cv::Mat proj_in_rgb = kWhite - (kNorm.dot(kWhite) / kNorm.dot(norm_rgb - kWhite)) * (norm_rgb - kWhite);
-    cv::Mat proj_in_lab = proj_in_rgb * kRgbToLab.t();
+  proj.convertTo(proj, CV_32SC1, 255.0);
 
-    cv::Mat full_proj_in_lab;
-    proj_in_lab.convertTo(full_proj_in_lab, CV_32SC1, 255.0);
-
-    return full_proj_in_lab;
-  } else {
-    return (cv::Mat_<int>(1, 3) << 0, 0, 0);
-  }
+  return proj;
 }
 
-std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_h) {
-  std::vector<int> extremes, peaks;
+int DocColorDecomposer::RadToDeg(double rad) {
+  return std::lround((rad * 180.0 / CV_PI) + 360.0) % 360;
+}
+
+std::vector<int> DocColorDecomposer::FindExtremes(const cv::Mat& hist) {
+  std::vector<int> extremes;
 
   int curr_delta = 0;
   int prev_delta = hist.at<int>(0) - hist.at<int>(hist.cols - 1);
@@ -480,6 +488,13 @@ std::vector<int> DocColorDecomposer::FindHistPeaks(const cv::Mat& hist, int min_
   if (hist.at<int>(extremes[0]) > hist.at<int>(extremes[1])) {
     std::ranges::rotate(extremes, extremes.begin() + 1);
   }
+
+  return extremes;
+}
+
+std::vector<int> DocColorDecomposer::FindPeaks(const cv::Mat& hist, int min_h) {
+  std::vector<int> peaks;
+  std::vector<int> extremes = FindExtremes(hist);
 
   for (const auto& peak_idx : std::views::iota(1u, extremes.size()) | std::views::stride(2)) {
     int lh = hist.at<int>(extremes[peak_idx]) - hist.at<int>(extremes[(peak_idx - 1) % extremes.size()]);

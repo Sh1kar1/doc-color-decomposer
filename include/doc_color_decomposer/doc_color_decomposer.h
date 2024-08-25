@@ -86,11 +86,17 @@ class [[nodiscard]] DocColorDecomposer final {
   void ComputeClusters();
   void ComputeLayers();
 
+  [[nodiscard]] std::vector<std::array<int, 3>> ComputePhiToMeanRgb();
+  [[nodiscard]] std::vector<std::array<int, 3>> ComputeClusterToMeanRgb();
+
   [[nodiscard]] static cv::Mat ThreshS(cv::Mat src, double thresh = 10.0);
   [[nodiscard]] static cv::Mat ThreshL(cv::Mat src, double thresh = 50.0);
   [[nodiscard]] static std::map<std::array<int, 3>, int> ComputeColorToN(const cv::Mat& src);
-  [[nodiscard]] static cv::Mat ProjOnLab(const cv::Mat& rgb);
-  [[nodiscard]] static std::vector<int> FindHistPeaks(const cv::Mat& hist, int min_h = 0);
+  [[nodiscard]] static cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transformation);
+  [[nodiscard]] static cv::Mat ProjOnLab(cv::Mat rgb);
+  [[nodiscard]] static int RadToDeg(double rad);
+  [[nodiscard]] static std::vector<int> FindExtremes(const cv::Mat& hist);
+  [[nodiscard]] static std::vector<int> FindPeaks(const cv::Mat& hist, int min_h = 0);
   [[nodiscard]] static double ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask);
   [[nodiscard]] static double ComputePq(const std::vector<cv::Mat>& predicted_masks, const std::vector<cv::Mat>& truth_masks);
 
@@ -101,7 +107,8 @@ class [[nodiscard]] DocColorDecomposer final {
   cv::Mat smoothed_phi_hist_;
   std::vector<int> clusters_;
   std::map<std::array<int, 3>, int> rgb_to_n_;
-  std::map<std::array<int, 3>, int> rgb_to_phi_;
+  std::map<std::array<int, 3>, std::array<int, 3>> rgb_to_lab_;
+  std::map<std::array<int, 3>, int> lab_to_phi_;
   std::vector<int> phi_to_cluster_;
   std::vector<cv::Mat> masks_;
   std::vector<cv::Mat> layers_;
