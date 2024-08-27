@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <ranges>
 
 #include <opencv2/imgproc/imgproc.hpp>
