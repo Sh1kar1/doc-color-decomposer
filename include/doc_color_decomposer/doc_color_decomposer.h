@@ -85,6 +85,7 @@ class [[nodiscard]] DocColorDecomposer final {
 
  private:
   void ComputePhiHist();
+  void ComputeSmoothedPhiHist();
   void ComputeClusters();
   void ComputeLayers();
 

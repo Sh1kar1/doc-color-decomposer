@@ -27,6 +27,7 @@ DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool p
   rgb_to_n_ = ColorToN(processed_src_);
 
   ComputePhiHist();
+  ComputeSmoothedPhiHist();
   ComputeClusters();
   ComputeLayers();
 }
@@ -286,8 +287,15 @@ void DocColorDecomposer::ComputePhiHist() {
       lab_to_phi_[proj_lab] = phi;
     }
   }
+}
 
-  cv::GaussianBlur(phi_hist_, smoothed_phi_hist_, cv::Size(tolerance_, tolerance_), 0.0);
+void DocColorDecomposer::ComputeSmoothedPhiHist() {
+  cv::hconcat(std::vector<cv::Mat>{phi_hist_, phi_hist_, phi_hist_}, smoothed_phi_hist_);
+
+  cv::GaussianBlur(smoothed_phi_hist_, smoothed_phi_hist_, cv::Size(tolerance_, tolerance_), 0.0);
+
+  smoothed_phi_hist_ = smoothed_phi_hist_(cv::Rect(360, 0, 360, 1));
+
   smoothed_phi_hist_.convertTo(smoothed_phi_hist_, CV_32SC1);
 }
 
