@@ -94,11 +94,11 @@ int main(int argc, char** argv) {
     }
 
     if (visualize) {
-      cv::imwrite((dst_path / (src_path.stem().string() + "-plot-2d-lab.png")).string(), dcd.Plot2dLab());
+      cv::imwrite((dst_path / (src_path.stem().string() + "-plot-2d-lab.png")).string(), dcd.Plot2DLab());
 
-      std::ofstream(dst_path / (src_path.stem().string() + "-plot-3d-rgb.tex")) << dcd.Plot3dRgb();
-      std::ofstream(dst_path / (src_path.stem().string() + "-plot-1d-phi.tex")) << dcd.Plot1dPhi();
-      std::ofstream(dst_path / (src_path.stem().string() + "-plot-1d-clusters.tex")) << dcd.Plot1dClusters();
+      std::ofstream(dst_path / (src_path.stem().string() + "-plot-3d-rgb.tex")) << dcd.Plot3DRgb();
+      std::ofstream(dst_path / (src_path.stem().string() + "-plot-1d-phi.tex")) << dcd.Plot1DPhi();
+      std::ofstream(dst_path / (src_path.stem().string() + "-plot-1d-clusters.tex")) << dcd.Plot1DClusters();
     }
 
     std::cout << "Success: files saved";
@@ -114,8 +114,8 @@ int main(int argc, char** argv) {
     std::cout << "OPTIONS\n";
     std::cout << "  --groundtruth=<path-to-directory-with-masks>  Set path to truth image masks and compute quality\n";
     std::cout << "  --tolerance=<odd-positive-value>              Set tolerance of decomposition (default: 35)\n";
+    std::cout << "  --nopreprocess                                Disable image preprocessing by aberration reduction\n";
     std::cout << "  --masking                                     Save binary masks instead of layers\n";
-    std::cout << "  --nopreprocess                                Disable image preprocessing\n";
     std::cout << "  --visualize                                   Save visualizations";
 
   } else {

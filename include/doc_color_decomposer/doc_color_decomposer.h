@@ -60,36 +60,36 @@ class [[nodiscard]] DocColorDecomposer final {
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot3dRgb(double yaw = 135.0, double pitch = 35.25) &;
+  [[nodiscard]] std::string Plot3DRgb(double yaw = 135.0, double pitch = 35.25) &;
 
   /**
    * @brief Generates a 2D scatter plot of the document colors projections on the \f$\alpha\beta\f$ plane
    *
    * @return image of the plot in the sRGB format
    */
-  [[nodiscard]] cv::Mat Plot2dLab() &;
+  [[nodiscard]] cv::Mat Plot2DLab() &;
 
   /**
    * @brief Generates a 1D histogram plot with respect to the angle \f$\phi\f$ in polar coordinates
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot1dPhi() &;
+  [[nodiscard]] std::string Plot1DPhi() &;
 
   /**
    * @brief Generates a smoothed and separated by clusters 1D histogram plot
    *
    * @return LaTeX code of the plot that can be saved in the .tex format and compiled
    */
-  [[nodiscard]] std::string Plot1dClusters() &;
+  [[nodiscard]] std::string Plot1DClusters() &;
 
  private:
   void ComputePhiHist();
   void ComputeClusters();
   void ComputeLayers();
 
-  [[nodiscard]] std::vector<std::array<int, 3>> ComputePhiToMeanRgb();
-  [[nodiscard]] std::vector<std::array<int, 3>> ComputeClusterToMeanRgb();
+  [[nodiscard]] std::vector<std::array<int, 3>> PhiToMeanRgb();
+  [[nodiscard]] std::vector<std::array<int, 3>> ClusterToMeanRgb();
 
   cv::Mat src_;
   cv::Mat processed_src_;

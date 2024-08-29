@@ -9,10 +9,11 @@
 
 namespace doc_color_decomposer {
 
-[[nodiscard]] cv::Mat ThreshS(cv::Mat src, double thresh = 10.0);
-[[nodiscard]] cv::Mat ThreshL(cv::Mat src, double thresh = 50.0);
-[[nodiscard]] std::map<std::array<int, 3>, int> ComputeColorToN(const cv::Mat& src);
-[[nodiscard]] cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transformation);
+[[nodiscard]] cv::Mat SmoothHue(cv::Mat src, int ker_size = 5);
+[[nodiscard]] cv::Mat ThreshSaturation(cv::Mat src, double thresh = 10.0);
+[[nodiscard]] cv::Mat ThreshLightness(cv::Mat src, double thresh = 50.0);
+[[nodiscard]] std::map<std::array<int, 3>, int> ColorToN(const cv::Mat& src);
+[[nodiscard]] cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transform);
 [[nodiscard]] cv::Mat ProjOnLab(cv::Mat rgb);
 [[nodiscard]] int RadToDeg(double rad);
 [[nodiscard]] std::vector<int> FindExtremes(const cv::Mat& hist);

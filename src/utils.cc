@@ -3,13 +3,29 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <numbers>
 #include <ranges>
 
 #include <opencv2/imgproc/imgproc.hpp>
 
 namespace doc_color_decomposer {
 
-cv::Mat ThreshS(cv::Mat src, double thresh) {
+cv::Mat SmoothHue(cv::Mat src, int ker_size) {
+  cv::Mat smoothed_src;
+  cv::GaussianBlur(src, smoothed_src, cv::Size(ker_size, ker_size), ker_size);
+
+  cv::cvtColor(src, src, cv::COLOR_BGR2HLS_FULL);
+  cv::cvtColor(smoothed_src, smoothed_src, cv::COLOR_BGR2HLS_FULL);
+
+  const int kFromTo[] = {0, 0};
+  cv::mixChannels(&smoothed_src, 1, &src, 1, kFromTo, 1);
+
+  cv::cvtColor(src, src, cv::COLOR_HLS2BGR_FULL);
+
+  return src;
+}
+
+cv::Mat ThreshSaturation(cv::Mat src, double thresh) {
   cv::cvtColor(src, src, cv::COLOR_BGR2HSV_FULL);
 
   std::vector<cv::Mat> hsv_channels;
@@ -24,7 +40,7 @@ cv::Mat ThreshS(cv::Mat src, double thresh) {
   return src;
 }
 
-cv::Mat ThreshL(cv::Mat src, double thresh) {
+cv::Mat ThreshLightness(cv::Mat src, double thresh) {
   cv::cvtColor(src, src, cv::COLOR_BGR2HLS_FULL);
 
   std::vector<cv::Mat> hls_channels;
@@ -39,7 +55,7 @@ cv::Mat ThreshL(cv::Mat src, double thresh) {
   return src;
 }
 
-std::map<std::array<int, 3>, int> ComputeColorToN(const cv::Mat& src) {
+std::map<std::array<int, 3>, int> ColorToN(const cv::Mat& src) {
   std::map<std::array<int, 3>, int> rgb_to_n;
 
   for (const auto& [y, x] : std::views::cartesian_product(std::views::iota(0, src.rows), std::views::iota(0, src.cols))) {
@@ -52,10 +68,10 @@ std::map<std::array<int, 3>, int> ComputeColorToN(const cv::Mat& src) {
   return rgb_to_n;
 }
 
-cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transformation) {
+cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transform) {
   cv::Mat default_proj = (cv::Mat_<int>(1, 3) << 0, 0, 0);
   bool is_white = norm.dot(point - center) == 0.0;
-  return !is_white ? ((center - (norm.dot(center) / norm.dot(point - center)) * (point - center)) * transformation.t()) : default_proj;
+  return !is_white ? (center - norm.dot(center) / norm.dot(point - center) * (point - center)) * transform.t() : default_proj;
 }
 
 cv::Mat ProjOnLab(cv::Mat rgb) {
@@ -77,32 +93,32 @@ cv::Mat ProjOnLab(cv::Mat rgb) {
 }
 
 int RadToDeg(double rad) {
-  return std::lround((rad * 180.0 / CV_PI) + 360.0) % 360;
+  return std::lround(rad * 180.0 / std::numbers::pi + 360.0) % 360;
 }
 
 std::vector<int> FindExtremes(const cv::Mat& hist) {
   std::vector<int> extremes;
 
-  int curr_delta = 0;
-  int prev_delta = hist.at<int>(0) - hist.at<int>(hist.cols - 1);
+  int curr_diff = 0;
+  int prev_diff = hist.at<int>(0) - hist.at<int>(hist.cols - 1);
   for (const auto& i : std::views::iota(0, hist.cols)) {
-    curr_delta = hist.at<int>((i + 1) % hist.cols) - hist.at<int>(i);
+    curr_diff = hist.at<int>((i + 1) % hist.cols) - hist.at<int>(i);
 
-    if (prev_delta != 0 && curr_delta == 0) {
+    if (prev_diff != 0 && curr_diff == 0) {
       int j = i;
       while (hist.at<int>(++j % hist.cols) == hist.at<int>(i)) {}
-      int next_delta = hist.at<int>(j % hist.cols) - hist.at<int>(i);
+      int next_diff = hist.at<int>(j % hist.cols) - hist.at<int>(i);
 
-      if (prev_delta * next_delta < 0) {
-        int mid = ((i + j) / 2) % hist.cols;
+      if (prev_diff * next_diff < 0) {
+        int mid = (i + j) / 2 % hist.cols;
         extremes.push_back(mid);
       }
 
-    } else if (prev_delta * curr_delta < 0) {
+    } else if (prev_diff * curr_diff < 0) {
       extremes.push_back(i);
     }
 
-    prev_delta = curr_delta;
+    prev_diff = curr_diff;
   }
   std::ranges::sort(extremes);
 
@@ -121,7 +137,7 @@ std::vector<int> FindPeaks(const cv::Mat& hist, int min_h) {
     int lh = hist.at<int>(extremes[peak_idx]) - hist.at<int>(extremes[(peak_idx - 1) % extremes.size()]);
     int rh = hist.at<int>(extremes[peak_idx]) - hist.at<int>(extremes[(peak_idx + 1) % extremes.size()]);
 
-    if (std::min(lh, rh) >= min_h) {
+    if (std::max(lh, rh) >= min_h) {
       peaks.push_back(extremes[peak_idx]);
     }
   }
