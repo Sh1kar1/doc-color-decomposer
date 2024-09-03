@@ -8,11 +8,9 @@
 
 | ![](data/1.png) | ![](assets/1-layer-1.png) | ![](assets/1-layer-2.png) | ![](assets/1-layer-3.png) | ![](assets/1-layer-4.png) |
 |:---------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|
-|    Document     |          Layer 1          |          Layer 2          |          Layer 3          |          Layer 4          |
 
 | ![](assets/1-plot-3d-rgb.png) | ![](assets/1-plot-2d-lab.png) | ![](assets/1-plot-1d-phi.png) | ![](assets/1-plot-1d-clusters.png) |
 |:-----------------------------:|:-----------------------------:|:-----------------------------:|:----------------------------------:|
-|              RGB              |       $\ell\alpha\beta$       |            $\phi$             |              Clusters              |
 
 ### Features
 
