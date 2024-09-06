@@ -22,6 +22,9 @@ if(DOXYGEN_FOUND)
 
   install(
       DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs
-      DESTINATION .
+      DESTINATION share/${CMAKE_PROJECT_NAME_SNAKE}
   )
+
+else()
+  message(WARNING "Doxygen not found")
 endif()
