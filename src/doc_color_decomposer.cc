@@ -26,8 +26,8 @@ DocColorDecomposer::DocColorDecomposer(const cv::Mat& src, int tolerance, bool p
 
   rgb_to_n_ = ColorToN(processed_src_);
 
-  ComputePhiHist();
-  ComputeSmoothedPhiHist();
+  ComputePhiHistogram();
+  ComputeSmoothedPhiHistogram();
   ComputeClusters();
   ComputeLayers();
 }
@@ -135,7 +135,7 @@ std::string DocColorDecomposer::Plot1DPhi() & {
   plot << std::fixed << std::setprecision(4);
 
   double max_n;
-  cv::minMaxLoc(phi_hist_, nullptr, &max_n, nullptr, nullptr);
+  cv::minMaxLoc(phi_histogram_, nullptr, &max_n, nullptr, nullptr);
   int round_max_n = std::lround(max_n);
 
   plot << "\\documentclass[tikz, border=1cm]{standalone}\n";
@@ -168,8 +168,8 @@ std::string DocColorDecomposer::Plot1DPhi() & {
     double g = mean_rgb[1] / 255.0;
     double b = mean_rgb[2] / 255.0;
 
-    int prev_phi_hist = std::lround(phi_hist_.at<double>(phi));
-    int next_phi_hist = std::lround(phi_hist_.at<double>(phi + 1));
+    int prev_phi_hist = std::lround(phi_histogram_.at<double>(phi));
+    int next_phi_hist = std::lround(phi_histogram_.at<double>(phi + 1));
 
     plot << "\\addplot[\n";
     plot << "  ybar interval,\n";
@@ -198,7 +198,7 @@ std::string DocColorDecomposer::Plot1DClusters() & {
   plot << std::fixed << std::setprecision(4);
 
   double max_n;
-  cv::minMaxLoc(smoothed_phi_hist_, nullptr, &max_n, nullptr, nullptr);
+  cv::minMaxLoc(smoothed_phi_histogram_, nullptr, &max_n, nullptr, nullptr);
   int round_max_n = std::lround(max_n);
 
   plot << "\\documentclass[tikz, border=1cm]{standalone}\n";
@@ -232,8 +232,8 @@ std::string DocColorDecomposer::Plot1DClusters() & {
     double g = mean_rgb[1] / 255.0;
     double b = mean_rgb[2] / 255.0;
 
-    auto prev_smoothed_phi_hist = smoothed_phi_hist_.at<int>(phi);
-    auto next_smoothed_phi_hist = smoothed_phi_hist_.at<int>(phi + 1);
+    auto prev_smoothed_phi_hist = smoothed_phi_histogram_.at<int>(phi);
+    auto next_smoothed_phi_hist = smoothed_phi_histogram_.at<int>(phi + 1);
 
     plot << "\\addplot[\n";
     plot << "  ybar interval,\n";
@@ -262,8 +262,8 @@ std::string DocColorDecomposer::Plot1DClusters() & {
   return plot.str();
 }
 
-void DocColorDecomposer::ComputePhiHist() {
-  phi_hist_ = cv::Mat::zeros(1, 360, CV_64FC1);
+void DocColorDecomposer::ComputePhiHistogram() {
+  phi_histogram_ = cv::Mat::zeros(1, 360, CV_64FC1);
 
   for (const auto& [rgb, n] : rgb_to_n_) {
     int r = rgb[0];
@@ -282,31 +282,31 @@ void DocColorDecomposer::ComputePhiHist() {
       double phi_rad = std::atan2(-lab_b, lab_a);
       int phi = RadToDeg(phi_rad);
 
-      phi_hist_.at<double>(phi) += n;
+      phi_histogram_.at<double>(phi) += n;
       rgb_to_lab_[rgb] = {lab_a, lab_b, lab_l};
       lab_to_phi_[proj_lab] = phi;
     }
   }
 }
 
-void DocColorDecomposer::ComputeSmoothedPhiHist() {
-  cv::hconcat(std::vector<cv::Mat>{phi_hist_, phi_hist_, phi_hist_}, smoothed_phi_hist_);
+void DocColorDecomposer::ComputeSmoothedPhiHistogram() {
+  cv::hconcat(std::vector<cv::Mat>{phi_histogram_, phi_histogram_, phi_histogram_}, smoothed_phi_histogram_);
 
-  cv::GaussianBlur(smoothed_phi_hist_, smoothed_phi_hist_, cv::Size(tolerance_, tolerance_), 0.0);
+  cv::GaussianBlur(smoothed_phi_histogram_, smoothed_phi_histogram_, cv::Size(tolerance_, tolerance_), 0.0);
 
-  smoothed_phi_hist_ = smoothed_phi_hist_(cv::Rect(360, 0, 360, 1));
+  smoothed_phi_histogram_ = smoothed_phi_histogram_(cv::Rect(360, 0, 360, 1));
 
-  smoothed_phi_hist_.convertTo(smoothed_phi_hist_, CV_32SC1);
+  smoothed_phi_histogram_.convertTo(smoothed_phi_histogram_, CV_32SC1);
 }
 
 void DocColorDecomposer::ComputeClusters() {
   phi_to_cluster_ = std::vector<int>(360, 1);
 
   double max_h;
-  cv::minMaxLoc(smoothed_phi_hist_, nullptr, &max_h, nullptr, nullptr);
+  cv::minMaxLoc(smoothed_phi_histogram_, nullptr, &max_h, nullptr, nullptr);
   int round_max_h = std::lround(0.025 * max_h);
 
-  std::vector<int> peaks = FindPeaks(smoothed_phi_hist_, round_max_h);
+  std::vector<int> peaks = FindPeaks(smoothed_phi_histogram_, round_max_h);
   peaks.push_back(peaks[0] + 360);
 
   std::transform(peaks.begin(), peaks.end() - 1, peaks.begin() + 1, std::back_inserter(clusters_), [](int a, int b) { return (a + b) / 2 % 360; });

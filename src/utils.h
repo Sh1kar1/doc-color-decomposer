@@ -16,8 +16,8 @@ namespace doc_color_decomposer {
 [[nodiscard]] cv::Mat ProjOnPlane(const cv::Mat& point, const cv::Mat& center, const cv::Mat& norm, const cv::Mat& transform);
 [[nodiscard]] cv::Mat ProjOnLab(cv::Mat rgb);
 [[nodiscard]] int RadToDeg(double rad);
-[[nodiscard]] std::vector<int> FindExtremes(const cv::Mat& hist);
-[[nodiscard]] std::vector<int> FindPeaks(const cv::Mat& hist, int min_h = 0);
+[[nodiscard]] std::vector<int> FindExtremes(const cv::Mat& histogram);
+[[nodiscard]] std::vector<int> FindPeaks(const cv::Mat& histogram, int min_h = 0);
 [[nodiscard]] double ComputeIou(const cv::Mat& predicted_mask, const cv::Mat& truth_mask);
 [[nodiscard]] double ComputePq(const std::vector<cv::Mat>& predicted_masks, const std::vector<cv::Mat>& truth_masks);
 

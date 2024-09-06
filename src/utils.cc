@@ -96,21 +96,21 @@ int RadToDeg(double rad) {
   return std::lround(rad * 180.0 / std::numbers::pi + 360.0) % 360;
 }
 
-std::vector<int> FindExtremes(const cv::Mat& hist) {
+std::vector<int> FindExtremes(const cv::Mat& histogram) {
   std::vector<int> extremes;
 
   int curr_diff = 0;
-  int prev_diff = hist.at<int>(0) - hist.at<int>(hist.cols - 1);
-  for (const auto& i : std::views::iota(0, hist.cols)) {
-    curr_diff = hist.at<int>((i + 1) % hist.cols) - hist.at<int>(i);
+  int prev_diff = histogram.at<int>(0) - histogram.at<int>(histogram.cols - 1);
+  for (const auto& i : std::views::iota(0, histogram.cols)) {
+    curr_diff = histogram.at<int>((i + 1) % histogram.cols) - histogram.at<int>(i);
 
     if (prev_diff != 0 && curr_diff == 0) {
       int j = i;
-      while (hist.at<int>(++j % hist.cols) == hist.at<int>(i)) {}
-      int next_diff = hist.at<int>(j % hist.cols) - hist.at<int>(i);
+      while (histogram.at<int>(++j % histogram.cols) == histogram.at<int>(i)) {}
+      int next_diff = histogram.at<int>(j % histogram.cols) - histogram.at<int>(i);
 
       if (prev_diff * next_diff < 0) {
-        int mid = (i + j) / 2 % hist.cols;
+        int mid = (i + j) / 2 % histogram.cols;
         extremes.push_back(mid);
       }
 
@@ -122,20 +122,20 @@ std::vector<int> FindExtremes(const cv::Mat& hist) {
   }
   std::ranges::sort(extremes);
 
-  if (hist.at<int>(extremes[0]) > hist.at<int>(extremes[1])) {
+  if (histogram.at<int>(extremes[0]) > histogram.at<int>(extremes[1])) {
     std::ranges::rotate(extremes, extremes.begin() + 1);
   }
 
   return extremes;
 }
 
-std::vector<int> FindPeaks(const cv::Mat& hist, int min_h) {
+std::vector<int> FindPeaks(const cv::Mat& histogram, int min_h) {
   std::vector<int> peaks;
-  std::vector<int> extremes = FindExtremes(hist);
+  std::vector<int> extremes = FindExtremes(histogram);
 
   for (const auto& peak_idx : std::views::iota(1u, extremes.size()) | std::views::stride(2)) {
-    int lh = hist.at<int>(extremes[peak_idx]) - hist.at<int>(extremes[(peak_idx - 1) % extremes.size()]);
-    int rh = hist.at<int>(extremes[peak_idx]) - hist.at<int>(extremes[(peak_idx + 1) % extremes.size()]);
+    int lh = histogram.at<int>(extremes[peak_idx]) - histogram.at<int>(extremes[(peak_idx - 1) % extremes.size()]);
+    int rh = histogram.at<int>(extremes[peak_idx]) - histogram.at<int>(extremes[(peak_idx + 1) % extremes.size()]);
 
     if (std::max(lh, rh) >= min_h) {
       peaks.push_back(extremes[peak_idx]);

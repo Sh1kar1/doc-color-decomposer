@@ -84,8 +84,8 @@ class [[nodiscard]] DocColorDecomposer final {
   [[nodiscard]] std::string Plot1DClusters() &;
 
  private:
-  void ComputePhiHist();
-  void ComputeSmoothedPhiHist();
+  void ComputePhiHistogram();
+  void ComputeSmoothedPhiHistogram();
   void ComputeClusters();
   void ComputeLayers();
 
@@ -95,8 +95,8 @@ class [[nodiscard]] DocColorDecomposer final {
   cv::Mat src_;
   cv::Mat processed_src_;
   int tolerance_;
-  cv::Mat phi_hist_;
-  cv::Mat smoothed_phi_hist_;
+  cv::Mat phi_histogram_;
+  cv::Mat smoothed_phi_histogram_;
   std::vector<int> clusters_;
   std::map<std::array<int, 3>, int> rgb_to_n_;
   std::map<std::array<int, 3>, std::array<int, 3>> rgb_to_lab_;
