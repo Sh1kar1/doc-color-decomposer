@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
       } else {
         std::cerr << "Error: invalid arguments\n";
-        std::cerr << "Checkout `./doc-color-decomposer-app --help`";
+        std::cerr << "Checkout `./doc-color-decomposer --help`";
         return 1;
       }
     }
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
     } catch (...) {
       std::cerr << "Error: invalid arguments\n";
-      std::cerr << "Checkout `./doc-color-decomposer-app --help`";
+      std::cerr << "Checkout `./doc-color-decomposer --help`";
       return 1;
     }
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 
     } catch (...) {
       std::cerr << "Error: invalid arguments\n";
-      std::cerr << "Checkout `./doc-color-decomposer-app --help`";
+      std::cerr << "Checkout `./doc-color-decomposer --help`";
       return 1;
     }
 
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     std::cout << "  More info: https://github.com/Sh1kar1/doc-color-decomposer\n\n";
 
     std::cout << "SYNOPSIS\n";
-    std::cout << "  ./doc-color-decomposer-app <path-to-image> <path-to-output-directory> [options]\n\n";
+    std::cout << "  ./doc-color-decomposer <path-to-image> <path-to-output-directory> [options]\n\n";
 
     std::cout << "OPTIONS\n";
     std::cout << "  --groundtruth=<path-to-directory-with-masks>  Set path to truth image masks and compute quality\n";
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 
   } else {
     std::cerr << "Error: invalid arguments\n";
-    std::cerr << "Checkout `./doc-color-decomposer-app --help`";
+    std::cerr << "Checkout `./doc-color-decomposer --help`";
     return 1;
   }
 
