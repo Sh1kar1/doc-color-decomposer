@@ -1,5 +1,3 @@
-project(${CMAKE_PROJECT_NAME}-documentation)
-
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
@@ -14,15 +12,16 @@ if(DOXYGEN_FOUND)
   configure_file(Doxyfile.in Doxyfile)
 
   add_custom_target(
-      ${PROJECT_NAME} ALL
+      ${PROJECT_NAME_SNAKE}_documentation ALL
       COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
       VERBATIM
   )
-  add_dependencies(${PROJECT_NAME} ${CMAKE_PROJECT_NAME}-library)
+
+  add_dependencies(${PROJECT_NAME_SNAKE}_documentation ${PROJECT_NAME_SNAKE}_library)
 
   install(
       DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs
-      DESTINATION share/${CMAKE_PROJECT_NAME_SNAKE}
+      DESTINATION share/${PROJECT_NAME_SNAKE}
   )
 
 else()
