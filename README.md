@@ -26,7 +26,7 @@ Implementation of the following research article:
 
 1. Document colors projection onto the $\alpha\beta$ plane
 2. Histogram calculation with respect to the angle $\phi$ in polar coordinates
-3. Histogram smoothing using Gaussian filter
+3. Histogram smoothing using _Gaussian filter_
 4. Clustering by peak detection in the smoothed histogram
 5. Decomposition into layers via clusters
 
@@ -35,7 +35,42 @@ Implementation of the following research article:
 - C++ & CMake
 - LaTeX
 - [OpenCV](https://opencv.org/)
-- [Doxygen](https://www.doxygen.nl/) & [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)
+- [Doxygen](https://www.doxygen.nl/)
+
+## Installation
+
+> [!NOTE]
+> You can download pre-built binaries from the [releases](https://github.com/Sh1kar1/doc-color-decomposer/releases) instead of building from source
+
+1. Ensure all requirements are installed:
+   ```shell
+   git --version
+   cmake --version
+   doxygen --version
+   <opencv>
+   <toolchain>
+   ```
+2. Clone the repository:
+   ```shell
+   git clone https://github.com/Sh1kar1/doc-color-decomposer.git
+   cd doc-color-decomposer
+   ```
+3. Build the library:
+   ```shell
+   mkdir build
+   cd build
+   cmake -DCMAKE_BUILD_TYPE=Release ..
+   cmake --build .
+   ```
+4. Install the library:
+   ```shell
+   cmake --install . [--prefix <installation-path>]
+   ```
+5. Link to your project:
+   ```cmake
+   find_package(DocColorDecomposer REQUIRED)
+   target_link_libraries(<your-target> PRIVATE DocColorDecomposer::DocColorDecomposer)
+   ```
 
 ## Usage
 
@@ -50,7 +85,6 @@ API usage example can be found in [main.cc](app/main.cc) (source of the demo CLI
 The demo CLI app is available at `<installation-path>/bin/doc-color-decomposer`
 
 Run the following command to see how to use it:
-
 ```shell
 ./doc-color-decomposer --help
 ```
