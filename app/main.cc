@@ -4,9 +4,10 @@
 #include <ranges>
 #include <regex>
 
+#include <opencv2/core/utils/logger.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 
-#include <doc_color_decomposer/doc_color_decomposer.h>
+#include "doc_color_decomposer/doc_color_decomposer.h"
 
 int main(int argc, char** argv) {
   std::vector<std::string> args(argv + 1, argv + argc);
@@ -52,6 +53,8 @@ int main(int argc, char** argv) {
       std::cerr << "Checkout `./doc-color-decomposer --help`";
       return 1;
     }
+
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_FATAL);
 
     doc_color_decomposer::DocColorDecomposer dcd;
     try {
