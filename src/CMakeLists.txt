@@ -1,6 +1,6 @@
 find_package(OpenCV REQUIRED)
 
-add_library(${PROJECT_NAME_SNAKE}_library STATIC doc_color_decomposer.cc utils.cc data.cc)
+add_library(${PROJECT_NAME_SNAKE}_library STATIC doc_color_decomposer.cpp utils.cpp data.cpp)
 
 set_target_properties(${PROJECT_NAME_SNAKE}_library PROPERTIES OUTPUT_NAME ${PROJECT_NAME_KEBAB})
 

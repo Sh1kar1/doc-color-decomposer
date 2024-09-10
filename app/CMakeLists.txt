@@ -1,4 +1,4 @@
-add_executable(${PROJECT_NAME_SNAKE}_app main.cc)
+add_executable(${PROJECT_NAME_SNAKE}_app main.cpp)
 
 set_target_properties(${PROJECT_NAME_SNAKE}_app PROPERTIES OUTPUT_NAME ${PROJECT_NAME_KEBAB})
 
