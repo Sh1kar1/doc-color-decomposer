@@ -46,9 +46,10 @@ Implementation of the following research article:
    ```shell
    git --version
    cmake --version
-   doxygen --version
-   <opencv>
-   <toolchain>
+   ```
+   ```cmake
+   find_package(OpenCV REQUIRED)
+   find_package(Doxygen REQUIRED)
    ```
 2. Clone the repository:
    ```shell
@@ -78,7 +79,7 @@ Implementation of the following research article:
 
 Generated API documentation is available at `<installation-path>/share/doc_color_decomposer/docs`
 
-API usage example can be found in [main.cc](app/main.cc) (source of the demo CLI app)
+API usage example can be found in [main.cpp](app/main.cpp) (source of the demo CLI app)
 
 ### App
 
