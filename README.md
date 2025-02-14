@@ -1,4 +1,4 @@
-# [Doc Color Decomposer](https://github.com/Sh1kar1/doc-color-decomposer)
+# [Doc Color Decomposer](https://github.com/sh1kar1/doc-color-decomposer)
 
 **Library for documents decomposition by color clustering created using C++ & OpenCV**
 
@@ -40,7 +40,7 @@ Implementation of the following research article:
 ## Installation
 
 > [!NOTE]
-> You can download pre-built binaries from the [releases](https://github.com/Sh1kar1/doc-color-decomposer/releases) instead of building from source
+> You can download pre-built binaries from the [releases](https://github.com/sh1kar1/doc-color-decomposer/releases) instead of building from source
 
 1. Ensure all requirements are installed:
    ```shell
@@ -53,7 +53,7 @@ Implementation of the following research article:
    ```
 2. Clone the repository:
    ```shell
-   git clone https://github.com/Sh1kar1/doc-color-decomposer.git
+   git clone https://github.com/sh1kar1/doc-color-decomposer.git
    cd doc-color-decomposer
    ```
 3. Build the library:
